@@ -1,0 +1,188 @@
+================================================================================
+PREPROCESAMIENTO UNIFICADO: TWITTER15 + TWITTER16
+================================================================================
+
+Fecha de ejecución: 2025-10-02 19:20:44
+
+Configuración:
+  • Datasets: twitter15, twitter16
+  • Mínimo interacciones por usuario: 8
+  • Estrategia de labels: 4class
+  • Salida: processed_h1/
+
+────────────────────────────────────────────────────────────────────────────────
+PASO 1: Cargando labels y contenido de tweets
+────────────────────────────────────────────────────────────────────────────────
+
+twitter15: 1490 items cargados
+  • unverified  :  374 ( 25.1%)
+  • non-rumor   :  374 ( 25.1%)
+  • true        :  372 ( 25.0%)
+  • false       :  370 ( 24.8%)
+
+twitter16: 818 items cargados
+  • true        :  207 ( 25.3%)
+  • false       :  205 ( 25.1%)
+  • non-rumor   :  205 ( 25.1%)
+  • unverified  :  201 ( 24.6%)
+
+* Total combinado: 2308 items únicos
+* Tweets con texto: 2308
+
+Distribución global de labels:
+  • non-rumor   :  579 ( 25.1%)
+  • true        :  579 ( 25.1%)
+  • unverified  :  575 ( 24.9%)
+  • false       :  575 ( 24.9%)
+
+────────────────────────────────────────────────────────────────────────────────
+PASO 2: Extrayendo interacciones desde árboles de propagación
+────────────────────────────────────────────────────────────────────────────────
+
+Procesando twitter15: 1490 árboles...
+  twitter15: 200/1490 árboles procesados...
+  twitter15: 400/1490 árboles procesados...
+  twitter15: 600/1490 árboles procesados...
+  twitter15: 800/1490 árboles procesados...
+  twitter15: 1000/1490 árboles procesados...
+  twitter15: 1200/1490 árboles procesados...
+  twitter15: 1400/1490 árboles procesados...
+
+Procesando twitter16: 818 árboles...
+  twitter16: 200/818 árboles procesados...
+  twitter16: 400/818 árboles procesados...
+  twitter16: 600/818 árboles procesados...
+  twitter16: 800/818 árboles procesados...
+
+* Total de árboles: 2308
+* Árboles procesados: 2308
+* Árboles sin label (ignorados): 0
+* Interacciones extraídas: 947024
+* Usuarios únicos: 677640
+* Items únicos: 2308
+
+Interacciones por dataset:
+  • twitter15: 599196 (63.3%)
+  • twitter16: 347828 (36.7%)
+
+────────────────────────────────────────────────────────────────────────────────
+PASO 3: Filtrando usuarios con < 8 interacciones
+────────────────────────────────────────────────────────────────────────────────
+
+Estadísticas ANTES del filtrado:
+  • Total usuarios: 677640
+  • Media interacciones: 1.40
+  • Mediana interacciones: 1
+  • Min interacciones: 1
+  • Max interacciones: 194
+
+Estadísticas DESPUÉS del filtrado:
+  • Usuarios válidos: 4856
+  • Usuarios eliminados: 672784
+  • % retenido: 0.7%
+  • Interacciones válidas: 63850
+  • Interacciones eliminadas: 883174
+
+Estadísticas de usuarios filtrados:
+  • Media interacciones: 13.15
+  • Mediana interacciones: 10
+  • Min interacciones: 8
+  • Max interacciones: 194
+
+────────────────────────────────────────────────────────────────────────────────
+PASO 4: División Train/Test (última interacción de cada usuario → test)
+────────────────────────────────────────────────────────────────────────────────
+
+Resultado del split:
+  • Train: 58994 interacciones
+  • Test:  4856 interacciones
+  • Ratio: 7.6% test
+
+  • Usuarios en test: 4856
+  • Usuarios válidos: 4856
+  • * Verificación (cada usuario tiene 1 test): True
+
+────────────────────────────────────────────────────────────────────────────────
+PASO 5: Generando mapeos globales user_id → user_idx e item_id → item_idx
+────────────────────────────────────────────────────────────────────────────────
+
+* 4856 usuarios mapeados (0 a 4855)
+* 2308 items mapeados (0 a 2307)
+
+* Guardado: processed_h1/user_map.csv
+* Guardado: processed_h1/item_map.csv
+
+────────────────────────────────────────────────────────────────────────────────
+PASO 6: Guardando interacciones train/test
+────────────────────────────────────────────────────────────────────────────────
+
+* Guardado: processed_h1/train_interactions.csv
+* Guardado: processed_h1/test_interactions.csv
+* Guardado: processed_h1/train_interactions_idx.csv
+* Guardado: processed_h1/test_interactions_idx.csv
+
+────────────────────────────────────────────────────────────────────────────────
+PASO 7: Generando labels - Estrategia: 4class
+────────────────────────────────────────────────────────────────────────────────
+
+* 2178 labels guardadas
+* 2178 tweets con texto guardados
+* Guardado: processed_h1/item_labels.csv
+* Guardado: processed_h1/item_text_clean.csv
+
+Distribución de labels (4class):
+  • Clase 0 (true        ):  536 ( 24.6%)
+  • Clase 1 (false       ):  511 ( 23.5%)
+  • Clase 2 (unverified  ):  555 ( 25.5%)
+  • Clase 3 (non-rumor   ):  576 ( 26.4%)
+
+Distribución por dataset origen:
+  • twitter15: 1398 ( 64.2%)
+  • twitter16:  780 ( 35.8%)
+
+================================================================================
+PREPROCESAMIENTO COMPLETADO *
+================================================================================
+
+Archivos generados en 'processed_h1/':
+  1. train_interactions.csv       → 58994 interacciones
+  2. test_interactions.csv        → 4856 interacciones
+  3. train_interactions_idx.csv   → 58994 interacciones (índices)
+  4. test_interactions_idx.csv    → 4856 interacciones (índices)
+  5. user_map.csv                 → 4856 usuarios
+  6. item_map.csv                 → 2308 items
+  7. item_labels.csv              → 2178 labels
+  8. item_text_clean.csv          → 2178 tweets con texto
+
+================================================================================
+ESTADÍSTICAS DEL DATASET COMBINADO
+================================================================================
+
+* Métricas generales:
+  • Número de usuarios: 4856
+  • Número de items (tweets raíz): 2178
+  • Número de interacciones: 63850
+  • Densidad de matriz user–item: 0.6037%
+  • Interacciones promedio por usuario: 13.15
+  • Interacciones promedio por item: 29.32
+
+* Distribución Train/Test:
+  • Train: 58994 (92.4%)
+  • Test:  4856 (7.6%)
+  • Estrategia: última interacción de cada usuario → test
+
+* Distribución de etiquetas:
+  • Clase 0 (true        ):  536 ( 24.6%)
+  • Clase 1 (false       ):  511 ( 23.5%)
+  • Clase 2 (unverified  ):  555 ( 25.5%)
+  • Clase 3 (non-rumor   ):  576 ( 26.4%)
+
+* Contribución por dataset:
+  • twitter15: 1398 items ( 64.2%)
+  • twitter16:  780 items ( 35.8%)
+
+================================================================================
+* Dataset listo para entrenar sistemas de recomendación:
+  • Baselines H1: Random, Most Popular, User-KNN
+  • Midterm: GNNs (LightGCN, GAT), Matrix Factorization, NCF
+================================================================================
