@@ -7,7 +7,8 @@ Pipeline de preprocesamiento para datasets Twitter15 y Twitter16, generando estr
 ```
 .
 ├── README.md                      # Este archivo
-├── preprocess_unified.py          # Script de preprocesamiento (modular + type hints)
+├── preprocess_unified.py          # Script de preprocesamiento 
+├── analyze_h1.py                  # Script de análisis exploratorio (EDA)
 ├── twitter15/                     # Dataset original Twitter15
 │   ├── label.txt
 │   └── tree/
@@ -21,25 +22,45 @@ Pipeline de preprocesamiento para datasets Twitter15 y Twitter16, generando estr
 │   └── twitter16/
 │       ├── label.txt
 │       └── source_tweets.txt
-└── processed_h1/                  # Datos procesados (generado)
-    ├── train_interactions.csv
-    ├── test_interactions.csv
-    ├── train_interactions_idx.csv
-    ├── test_interactions_idx.csv
-    ├── user_map.csv
-    ├── item_map.csv
-    ├── item_labels.csv
-    ├── item_text_clean.csv
-    └── stats_summary.txt
+├── processed_h1/                  # Datos procesados (generado)
+│   ├── train_interactions.csv
+│   ├── test_interactions.csv
+│   ├── train_interactions_idx.csv
+│   ├── test_interactions_idx.csv
+│   ├── user_map.csv
+│   ├── item_map.csv
+│   ├── item_labels.csv
+│   ├── item_text_clean.csv
+│   └── stats_summary.txt
+└── plots_and_reports/             # Análisis y visualizaciones (generado)
+    ├── usuarios_hist.png
+    ├── items_hist.png
+    ├── balance_labels.png
+    ├── cascadas_tamano_hist.png
+    ├── cascadas_profundidad_hist.png
+    ├── viralidad_fake_vs_real.png
+    ├── resumen_stats.csv
+    ├── top_usuarios.csv
+    └── top_items.csv
 ```
 
 ## Uso Rápido
+
+### 1. Preprocesamiento
 
 ```bash
 python3 preprocess_unified.py
 ```
 
 Esto generará automáticamente todos los archivos en `processed_h1/`.
+
+### 2. Análisis Exploratorio (EDA)
+
+```bash
+python3 analyze_h1.py
+```
+
+Genera visualizaciones y estadísticas descriptivas en `plots_and_reports/`.
 
 ## Configuración
 
@@ -84,6 +105,80 @@ class Config:
 
 ### Estadísticas
 - `stats_summary.txt` - Métricas completas del procesamiento
+
+## Análisis Exploratorio de Datos (EDA)
+
+El script `analyze_h1.py` genera un análisis completo del dataset procesado, enfocado en **viralidad** y **desinformación**.
+
+### Ejecución
+
+```bash
+python3 analyze_h1.py
+```
+
+**Requisitos:** `pandas`, `numpy`, `matplotlib`, `scipy` (opcional para test estadístico)
+
+### Análisis Generados
+
+#### 📊 Gráficos (`plots_and_reports/`)
+
+1. **`usuarios_hist.png`** - Distribución de interacciones por usuario
+   - Muestra mediana y filtro mínimo (8 interacciones)
+   - Justifica decisiones de preprocesamiento
+
+2. **`items_hist.png`** - Distribución de interacciones por item (long-tail)
+   - Evidencia la distribución long-tail típica de redes sociales
+   - Muestra items altamente virales vs. poco difundidos
+
+3. **`balance_labels.png`** - Balance de clases multiclase
+   - 4 categorías: `false`, `true`, `unverified`, `non-rumor`
+   - Porcentajes y conteos absolutos
+   - Confirma dataset balanceado (~25% cada clase)
+
+4. **`cascadas_tamano_hist.png`** - Distribución de tamaño de cascadas
+   - Histograma mostrando número de usuarios por cascada
+   - Líneas de promedio y mediana para referencia
+   - Visualiza la distribución de alcance de difusión
+
+5. **`cascadas_profundidad_hist.png`** - Distribución de profundidad de cascadas
+   - Histograma mostrando niveles de propagación
+   - Líneas de promedio y mediana para referencia
+   - Muestra cuán profundas son las cascadas de difusión
+
+6. **`viralidad_fake_vs_real.png`** - Viralidad comparativa
+   - Gráfico de barras con barras de error (desviación estándar)
+   - Compara promedio de interacciones: Noticias Falsas vs Verdaderas
+   - **Incluye test estadístico:** Mann-Whitney U test
+   - Muestra si las noticias falsas son significativamente más virales
+
+#### 📋 Tablas CSV (`plots_and_reports/`)
+
+1. **`resumen_stats.csv`** - Estadísticas globales del dataset
+   - Usuarios, items, interacciones, densidad
+   - Distribución multiclase (n y %)
+
+2. **`top_items.csv`** - Top 10 items más virales
+   - Identificadores, número de interacciones
+   - Tipo (Fake/Real), categoría a anlizar
+
+3. **`top_usuarios.csv`** - Top 10 usuarios más activos
+   - Identificadores, número de interacciones
+
+### Hallazgos Principales
+
+Con el dataset procesado (configuración por defecto):
+
+| Métrica | Valor |
+|---------|-------|
+| **Viralidad Fake** | 32.99 interacciones promedio |
+| **Viralidad Real** | 18.07 interacciones promedio |
+| **Ratio Fake/Real** | 1.8x más viral |
+| **Significancia estadística** | p < 0.001 (altamente significativo) |
+| **Top 10 items virales** | 100% Fake |
+| **Tamaño cascada promedio** | 411.3 usuarios |
+| **Profundidad cascada promedio** | 4.7 niveles |
+
+**Conclusión:** Las noticias falsas son significativamente más virales que las verdaderas en este dataset.
 
 ## Pipeline de Procesamiento
 
