@@ -19,6 +19,8 @@ data_processing/
 ├── analyze_h1.py             # Análisis exploratorio (EDA)
 ├── processed_h1/             # Datos procesados para RecSys
 └── plots_and_reports/        # Visualizaciones y estadísticas
+
+H1_RecSys.ipynb               # Implementación de sistemas de recomendación
 ```
 
 ## Inicio Rápido
@@ -29,4 +31,6 @@ python3 preprocess_unified.py  # Generar datasets
 python3 analyze_h1.py          # Análisis exploratorio
 ```
 
-Ver [`data_processing/README.md`](data_processing/README.md) para documentación completa.
+**Notebook de RecSys:** [`H1_RecSys.ipynb`](H1_RecSys.ipynb) implementa y compara 5 modelos de recomendación (UKNN, IKNN, Most Popular, Random, TF-IDF) con métricas de bias, exposure y coverage.
+
+Ver [`data_processing/README.md`](data_processing/README.md) para documentación completa del EDA.
