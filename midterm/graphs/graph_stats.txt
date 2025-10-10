@@ -1,0 +1,23 @@
+============================================================
+BIPARTITE GRAPH (User-Item)
+============================================================
+
+num_users: 4856
+num_items: 2308
+num_edges: 58994
+density: 0.005264
+avg_user_degree: 12.148681640625
+avg_item_degree: 25.560659408569336
+max_user_degree: 193
+max_item_degree: 235
+
+============================================================
+SOCIAL GRAPH (User-User, min_common_items=3)
+============================================================
+
+num_nodes: 4856
+num_edges: 295660
+density: 0.012541
+avg_degree: 60.885501861572266
+max_degree: 1288
+min_degree: 0
