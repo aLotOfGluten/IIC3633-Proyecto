@@ -1,312 +1,122 @@
-# Midterm - GNN-based Recommender Systems
+# Midterm - GNN Recommender Systems
 
-Pipeline completo para sistemas de recomendación basados en Graph Neural Networks sobre datasets Twitter15/16. Incluye construcción de grafos, generación de node embeddings, Linear Threshold Model para simulación de propagación, y métricas de evaluación.
+Pipeline para sistemas de recomendación basados en GNNs sobre Twitter15/16. Incluye construcción de grafos, embeddings, Linear Threshold Model, y métricas de evaluación.
 
-## Setup Inicial
-
-### ¿Por qué usar un Virtual Environment?
-
-Un virtual environment (venv) es **esencial** para este proyecto por varias razones:
-
-1. **Aislamiento de dependencias**: PyTorch y PyTorch Geometric tienen versiones específicas que pueden conflictuar con otros proyectos
-2. **Reproducibilidad**: Garantiza que todos trabajen con las mismas versiones de librerías
-3. **Limpieza**: No contamina el Python global del sistema
-4. **Compatibilidad**: PyTorch Geometric puede requerir versiones específicas de torch
-
-### Instalación Paso a Paso
-
-#### Opción A: Setup Automatizado (Recomendado - Linux/Mac)
+## Quick Setup
 
 ```bash
-# 1. Navegar al directorio midterm
 cd midterm
-
-# 2. Ejecutar script de setup
-bash setup.sh
-```
-
-El script automáticamente:
-- ✓ Verifica Python
-- ✓ Crea virtual environment
-- ✓ Instala todas las dependencias
-- ✓ Valida la instalación
-
-#### Opción B: Setup Manual
-
-```bash
-# 1. Navegar al directorio midterm
-cd midterm
-
-# 2. Crear virtual environment
 python3 -m venv venv
-
-# 3. Activar el virtual environment
-# En Linux/Mac:
-source venv/bin/activate
-# En Windows:
-# venv\Scripts\activate
-
-# 4. Instalar dependencias
-pip install --upgrade pip
+source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
-
-# 5. Verificar instalación
-python -c "import torch; import torch_geometric; print('✓ PyTorch y PyG instalados correctamente')"
-```
-
-### Notas Importantes
-
-- **BERT Embeddings**: La primera ejecución de `--bert` descargará modelos (~400MB)
-- **Activación del venv**: Recuerda activar el venv cada vez que trabajes:
-  ```bash
-  source venv/bin/activate  # Linux/Mac
-  ```
-- **PyTorch Geometric**: Si tienes problemas de instalación, ver sección [Troubleshooting](#troubleshooting)
-
-### Verificación del Setup
-
-Una vez instalado, verifica que todo funcione:
-
-```bash
-# Activar venv
-source venv/bin/activate
-
-# Ejecutar test completo del pipeline
 python test_pipeline.py
 ```
 
-Si todo está correcto, deberías ver:
-```
-============================================================
-✓ TODOS LOS TESTS PASARON CORRECTAMENTE
-============================================================
-```
-
-### Troubleshooting
-
-**Error: `ModuleNotFoundError: No module named 'torch_geometric'`**
-- PyTorch Geometric requiere instalación especial si `pip install` falla:
-  ```bash
-  pip install torch-geometric torch-scatter torch-sparse \
-    -f https://data.pyg.org/whl/torch-$(python -c "import torch; print(torch.__version__)")+cpu.html
-  ```
-
-**No encuentra archivos en `../data_processing/processed_h1/`**
-- Asegúrate de ejecutar los scripts desde el directorio `midterm/`
-- Verifica que exista el directorio `../data_processing/processed_h1/` con los datos procesados
-
-## Estructura del Proyecto
+## Estructura
 
 ```
 midterm/
-├── build_graphs.py              # Construcción de grafos bipartito y social
-├── prepare_features.py          # Generación de node embeddings
-├── linear_threshold_model.py    # Simulación de propagación (LTM)
+├── build_graphs.py              # Grafos bipartito y social
+├── prepare_features.py          # Node embeddings (BERT/random)
+├── linear_threshold_model.py    # Simulación de propagación
 ├── metrics.py                   # MRR, ILD, propagation metrics
-├── graph_utils.py               # Utilidades de carga y estadísticas
-├── node_features.py             # Encoders BERT y random
-├── demo_ltm.py                  # Suite de demos interactivas
-├── test_pipeline.py             # Tests de verificación
-└── graphs/                      # Salidas generadas
-    ├── bipartite_graph.pt
-    ├── social_graph.pt
-    ├── graph_stats.txt
-    ├── item_embeddings_bert.pt
-    ├── item_embeddings_random.pt
-    └── user_embeddings_init.pt
+├── graph_utils.py               # DataLoader y utilidades
+├── node_features.py             # Encoders
+├── demo_ltm.py                  # Demos interactivas
+└── test_pipeline.py             # Tests de verificación
 ```
 
-## Inicio Rápido (Quick Start)
-
-Después de completar el [Setup Inicial](#setup-inicial):
-
-### 1. Construir grafos
+## Pipeline
 
 ```bash
-cd midterm
+# 1. Construir grafos
 python build_graphs.py
-```
 
-### 2. Generar embeddings
+# 2. Generar embeddings
+python prepare_features.py --all  # BERT + random + users
+# o
+python prepare_features.py --random --users  # Solo random (más rápido)
 
-```bash
-# Opción rápida (random embeddings para testing)
-python prepare_features.py --random --users
-
-# Opción completa (BERT embeddings - más lento pero mejor calidad)
-python prepare_features.py --bert --users
-
-# Generar todos los embeddings de una vez
-python prepare_features.py --all
-```
-
-### 3. Probar demos interactivas
-
-```bash
-# Demo completo del Linear Threshold Model
+# 3. Demo LTM
 python demo_ltm.py
-
-# Verificar que todo el pipeline funcione
-python test_pipeline.py
 ```
 
-## Componentes Principales
+## Componentes
 
 ### Grafos
 
 **Bipartito (User-Item)**
-- Conecta usuarios con ítems según interacciones de entrenamiento
-- Nodos: `[user_0, ..., user_N, item_0, ..., item_M]`
-- Aristas bidireccionales
-- Estadísticas: 4,856 users × 2,308 items = 117,988 edges (densidad 0.53%)
+- 4,856 users × 2,308 items = 117,988 edges
+- Nodos: `[user_0...user_N, item_0...item_M]`
 
 **Social (User-User)**
-- Grafo implícito basado en co-interacciones
-- Conexión si usuarios comparten ≥3 items en común
-- Pesos: número de items compartidos
-- Estadísticas: 4,856 nodes, 295,660 edges (densidad 1.25%)
+- Grafo implícito por co-interacciones (≥3 items comunes)
+- 4,856 nodes, 295,660 edges
+- Pesos = items compartidos
 
 ```python
-import torch
-
 bipartite = torch.load('graphs/bipartite_graph.pt')
 social = torch.load('graphs/social_graph.pt')
-
-print(bipartite.num_users, bipartite.num_items)
-print(social.edge_index.shape, social.edge_weight.shape)
 ```
 
-### Node Embeddings
+### Embeddings
 
-**BERT Embeddings (items)**
-- Modelo: `all-MiniLM-L6-v2` (384-dim)
-- Embeddings semánticos del contenido de tweets
-- Maneja automáticamente items sin texto (130 de 2308)
-
-**Random/Learnable Embeddings (users)**
-- Inicialización Xavier para embeddings entrenables
-- Dimensión configurable (default: 64)
+**BERT**: `all-MiniLM-L6-v2` (384-dim) para items
+**Random/Learnable**: Xavier init para users
 
 ```bash
-# Generar BERT embeddings
-python prepare_features.py --bert
-
-# Generar user embeddings
-python prepare_features.py --users --dim 64
-
-# Generar todos
-python prepare_features.py --all
-```
-
-```python
-from graph_utils import load_embeddings
-
-item_emb = load_embeddings('graphs/item_embeddings_bert.pt')
-user_emb = load_embeddings('graphs/user_embeddings_init.pt')
+python prepare_features.py --bert    # Items con BERT
+python prepare_features.py --users   # Users con Xavier
 ```
 
 ### Linear Threshold Model
 
-Simulación de propagación de información sobre el grafo social usando el modelo clásico de umbrales.
-
-**Características:**
-- Thresholds configurables (uniform random, custom, etc.)
-- Simulación estocástica con múltiples rondas
-- Análisis Monte Carlo para esperanza de propagación
-
 ```python
 from linear_threshold_model import LinearThresholdModel
-import torch
 
 ltm = LinearThresholdModel(torch.load('graphs/social_graph.pt'))
-
-seed_nodes = {0, 1, 2, 3, 4}
-infection_rounds = ltm.simulate(seed_nodes, max_iterations=50)
-
-results = ltm.monte_carlo_propagation(seed_nodes, num_simulations=100)
-print(f"Mean reach: {results['mean_reach']*100:.2f}%")
+seed_nodes = {0, 1, 2}
+rounds = ltm.simulate(seed_nodes, max_iterations=50)
+stats = ltm.monte_carlo_propagation(seed_nodes, num_simulations=100)
 ```
 
-**Demo interactiva:**
-```bash
-python demo_ltm.py
-```
+### Métricas
 
-### Métricas de Evaluación
-
-**Recomendación:**
-- **MRR** (Mean Reciprocal Rank): Calidad del ranking
-- **ILD** (Inter-List Diversity): Diversidad entre usuarios
-- **Coverage**: % del catálogo recomendado
-- **Cosine Diversity**: Diversidad basada en embeddings
-
-**Propagación:**
-- **Reach**: % de nodos infectados
-- **Depth**: Profundidad de cascada
-- **Speed**: Velocidad de propagación
-- **Total Infected**: Nodos alcanzados
+**Recomendación**: MRR, ILD, Coverage, Cosine Diversity
+**Propagación**: Reach, Depth, Speed
 
 ```python
 from metrics import RecommendationMetrics, PropagationMetrics
 
-rec_metrics = RecommendationMetrics(
-    recommendations=recs,
-    ground_truth=gt,
-    catalog_size=num_items,
-    embeddings=item_emb
-).compute_all()
-
-prop_metrics = PropagationMetrics(
-    infection_rounds=rounds,
-    total_nodes=num_users
-).compute_all()
+rec_metrics = RecommendationMetrics(recs, gt, num_items, embeddings).compute_all()
+prop_metrics = PropagationMetrics(rounds, num_users).compute_all()
 ```
 
----
+## Implementación de Modelos
 
-## Guía de Implementación de Modelos
-
-### Archivos Requeridos
-
-| Archivo | Descripción |
-|---------|-------------|
-| `graphs/bipartite_graph.pt` | Grafo user-item para entrenamiento |
-| `graphs/social_graph.pt` | Grafo social para propagación |
-| `graphs/item_embeddings_bert.pt` | Node features de ítems (384-dim) |
-| `../data_processing/processed_h1/train_interactions_idx.csv` | Train set |
-| `../data_processing/processed_h1/test_interactions_idx.csv` | Test set |
-| `../data_processing/processed_h1/item_labels.csv` | Labels (true/false/unverified/non-rumor) |
-
----
-
-### 1. GCN Baseline (Semana 2)
-
-#### Setup
+### Archivos necesarios
 
 ```python
-import torch
-import torch.nn as nn
-import pandas as pd
-from torch_geometric.nn import GCNConv
-
-import sys
-sys.path.insert(0, 'midterm')
-from graph_utils import load_embeddings
-from metrics import RecommendationMetrics
-
 bipartite = torch.load('midterm/graphs/bipartite_graph.pt')
+social = torch.load('midterm/graphs/social_graph.pt')
 item_features = load_embeddings('midterm/graphs/item_embeddings_bert.pt')
 train = pd.read_csv('data_processing/processed_h1/train_interactions_idx.csv')
 test = pd.read_csv('data_processing/processed_h1/test_interactions_idx.csv')
-
-num_users = bipartite.num_users
-num_items = bipartite.num_items
-edge_index = bipartite.edge_index
+labels = pd.read_csv('data_processing/processed_h1/item_labels.csv')
 ```
 
-#### Modelo
+**Nota**: Cada modelo debe entrenarse en dos versiones:
+1. Con BERT embeddings (`item_embeddings_bert.pt`)
+2. Sin BERT embeddings (`item_embeddings_random.pt`)
+
+Esto permite comparar el impacto de embeddings semánticos vs random en recomendación y propagación.
+
+### 1. GCN Baseline
 
 ```python
+import torch.nn as nn
+from torch_geometric.nn import GCNConv
+
 class GCNRecommender(nn.Module):
     def __init__(self, num_users, num_items, item_feature_dim,
                  embedding_dim=64, hidden_dim=32):
@@ -316,7 +126,6 @@ class GCNRecommender(nn.Module):
 
         self.user_embedding = nn.Embedding(num_users, embedding_dim)
         self.item_projection = nn.Linear(item_feature_dim, embedding_dim)
-
         self.conv1 = GCNConv(embedding_dim, hidden_dim)
         self.conv2 = GCNConv(hidden_dim, embedding_dim)
 
@@ -325,8 +134,8 @@ class GCNRecommender(nn.Module):
     def forward(self, edge_index, item_features):
         user_emb = self.user_embedding.weight
         item_emb = self.item_projection(item_features)
-
         x = torch.cat([user_emb, item_emb], dim=0)
+
         x = self.conv1(x, edge_index)
         x = torch.relu(x)
         x = self.conv2(x, edge_index)
@@ -334,7 +143,7 @@ class GCNRecommender(nn.Module):
         return x[:self.num_users], x[self.num_users:]
 ```
 
-#### Entrenamiento (BPR Loss)
+**Training (BPR Loss)**
 
 ```python
 def train_epoch(model, edge_index, item_features, interactions, optimizer):
@@ -355,17 +164,9 @@ def train_epoch(model, edge_index, item_features, interactions, optimizer):
     optimizer.step()
 
     return loss.item()
-
-model = GCNRecommender(num_users, num_items, item_features.size(1))
-optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-
-for epoch in range(50):
-    loss = train_epoch(model, edge_index, item_features, train, optimizer)
-    if epoch % 10 == 0:
-        print(f"Epoch {epoch}: Loss = {loss:.4f}")
 ```
 
-#### Evaluación
+**Evaluación**
 
 ```python
 @torch.no_grad()
@@ -384,25 +185,16 @@ def evaluate(model, edge_index, item_features, test_df, k=10):
         true_items = test_df[test_df['user_idx'] == user_idx]['item_idx'].values
         ground_truth.append(set(true_items))
 
-    metrics_calc = RecommendationMetrics(
-        recommendations=recommendations,
-        ground_truth=ground_truth,
-        catalog_size=model.num_items,
-        embeddings=item_features
-    )
-    return metrics_calc.compute_all()
+    from metrics import RecommendationMetrics
+    metrics = RecommendationMetrics(
+        recommendations, ground_truth,
+        model.num_items, item_features
+    ).compute_all()
 
-metrics = evaluate(model, edge_index, item_features, test)
-print(f"MRR: {metrics['mrr']:.4f}")
-print(f"ILD: {metrics['ild']:.4f}")
-print(f"Coverage: {metrics['coverage']:.4f}")
+    return metrics
 ```
 
----
-
-### 2. LightGCN (Semana 3)
-
-Modelo simplificado que elimina transformaciones no lineales y features explícitas.
+### 2. LightGCN
 
 ```python
 from torch_geometric.nn import LGConv
@@ -412,7 +204,6 @@ class LightGCN(nn.Module):
         super().__init__()
         self.num_users = num_users
         self.num_items = num_items
-        self.num_layers = num_layers
 
         self.user_embedding = nn.Embedding(num_users, embedding_dim)
         self.item_embedding = nn.Embedding(num_items, embedding_dim)
@@ -433,45 +224,14 @@ class LightGCN(nn.Module):
         return final_emb[:self.num_users], final_emb[self.num_users:]
 ```
 
-**Hiperparámetros recomendados:**
-- Layers: 3-4
-- Embedding dim: 64-128
-- Learning rate: 0.001
-- Epochs: 50-100
+**Hiperparámetros**: layers=3-4, dim=64-128, lr=0.001, epochs=50-100
 
----
-
-### 3. Sheaf4Rec (Semana 3 - Opcional)
-
-Modelo avanzado usando sheaf neural networks. Consultar paper original para implementación.
-
-**Referencias:**
-- "Sheaf Neural Networks for Graph-based Recommendations"
-- PyTorch Geometric: sheaf convolution layers
-
----
-
-### 4. Análisis de Propagación de Desinformación (Semana 4)
-
-#### Objetivo
-
-Medir cómo cada modelo de recomendación amplifica la propagación de fake news en la red social.
-
-#### Metodología
-
-1. Generar recomendaciones top-10 para todos los usuarios
-2. Identificar usuarios expuestos a fake news (label='false')
-3. Simular propagación usando Linear Threshold Model
-4. Comparar alcance de desinformación entre modelos
+### 3. Análisis de Propagación de Fake News
 
 ```python
 from linear_threshold_model import LinearThresholdModel
 from metrics import PropagationMetrics
-import pandas as pd
-import torch
 
-labels = pd.read_csv('data_processing/processed_h1/item_labels.csv')
-social = torch.load('midterm/graphs/social_graph.pt')
 ltm = LinearThresholdModel(social, seed=42)
 
 def analyze_misinformation_spread(recommendations, model_name):
@@ -484,173 +244,46 @@ def analyze_misinformation_spread(recommendations, model_name):
                 seed_users.add(user_idx)
                 break
 
-    print(f"\n{model_name}:")
-    print(f"  Usuarios con fake news en top-10: {len(seed_users)}")
+    print(f"\n{model_name}: {len(seed_users)} users exposed to fake news")
 
     if len(seed_users) == 0:
-        print("  No hay usuarios expuestos a fake news")
         return None
 
     infection_rounds = ltm.simulate(seed_users, max_iterations=50)
-    prop_metrics = PropagationMetrics(infection_rounds, ltm.num_nodes)
-    metrics = prop_metrics.compute_all()
+    metrics = PropagationMetrics(infection_rounds, ltm.num_nodes).compute_all()
 
-    print(f"  Alcance: {metrics['reach']*100:.2f}%")
-    print(f"  Profundidad: {metrics['depth']} rondas")
-    print(f"  Infectados: {metrics['total_infected']} usuarios")
+    print(f"  Reach: {metrics['reach']*100:.2f}%")
+    print(f"  Depth: {metrics['depth']} rounds")
+    print(f"  Infected: {metrics['total_infected']} users")
 
     return metrics
 
-gcn_metrics = analyze_misinformation_spread(gcn_recommendations, "GCN")
-lightgcn_metrics = analyze_misinformation_spread(lightgcn_recommendations, "LightGCN")
+gcn_metrics = analyze_misinformation_spread(gcn_recs, "GCN")
+lgcn_metrics = analyze_misinformation_spread(lightgcn_recs, "LightGCN")
 ```
 
-#### Modelos a Comparar
+## Dataset Stats
 
-| Modelo | Tipo | Objetivo |
-|--------|------|----------|
-| Random | Baseline | Control aleatorio |
-| Most Popular | Baseline | Popularidad |
-| User-KNN | Colaborativo | Baseline clásico |
-| GCN | GNN | Modelo baseline |
-| LightGCN | GNN | Estado del arte simplificado |
-| Sheaf4Rec | GNN | Estado del arte avanzado |
+**Grafos**
+- Bipartite: 4,856 users × 2,308 items, 117,988 edges (0.53% density)
+- Social: 4,856 nodes, 295,660 edges (1.25% density)
 
-#### Métricas de Análisis
+**Splits**
+- Train: 58,994 interactions
+- Test: 4,856 interactions (leave-one-out)
 
-**Recomendación:**
-- MRR (calidad)
-- ILD (diversidad)
-- Coverage (amplitud)
+**Labels** (balanced)
+- true: 24.6%
+- false: 23.5%
+- unverified: 25.5%
+- non-rumor: 26.4%
 
-**Propagación:**
-- Reach (alcance)
-- Depth (profundidad)
-- Speed (velocidad)
+Ver `graphs/graph_stats.txt` para detalles.
 
-**Análisis crítico:**
-- ¿Qué modelo tiene mejor MRR?
-- ¿Qué modelo es más diverso (ILD)?
-- ¿Qué modelo amplifica más fake news?
-- ¿Existe trade-off entre precisión y propagación de desinformación?
+## Estado
 
----
-
-## Consideraciones Técnicas
-
-### Embeddings
-
-- **Items con texto:** 2178 de 2308 items tienen contenido textual
-- **Items sin texto:** 130 items reciben embedding BERT de string vacío
-- **Alternativa:** Usar embeddings híbridos (BERT + learnable layer)
-
-### Evaluación
-
-- **Estrategia:** Leave-one-out (último item de cada usuario → test)
-- **Exclusión:** Eliminar items de train al generar recomendaciones
-- **Métricas:** Promediar sobre todos los usuarios
-
-### Balance de Clases
-
-Dataset balanceado: ~25% por clase (true/false/unverified/non-rumor)
-
-**Análisis de bias:**
-- Comparar distribución en recomendaciones vs dataset base
-- Medir exposure de fake news vs true news
-- Identificar si modelos amplifican desinformación sistemáticamente
-
----
-
-## Referencia de APIs
-
-### DataLoader
-
-```python
-from graph_utils import DataLoader
-
-loader = DataLoader(data_path="../data_processing/processed_h1")
-interactions = loader.load_interactions()
-user_map, item_map = loader.load_mappings()
-labels = loader.load_labels()
-item_text = loader.load_item_text()
-```
-
-### Embeddings
-
-```python
-from graph_utils import load_embeddings, save_embeddings
-
-embeddings = load_embeddings('graphs/item_embeddings_bert.pt')
-save_embeddings(new_embeddings, 'graphs/custom_embeddings.pt')
-```
-
-### Linear Threshold Model
-
-```python
-from linear_threshold_model import LinearThresholdModel, load_ltm_from_graph
-
-ltm = load_ltm_from_graph('graphs/social_graph.pt', seed=42)
-rounds = ltm.simulate(seed_nodes, max_iterations=50)
-expected = ltm.expected_propagation(seed_nodes, num_simulations=100)
-stats = ltm.monte_carlo_propagation(seed_nodes, num_simulations=100)
-```
-
-### Métricas
-
-```python
-from metrics import (
-    mean_reciprocal_rank,
-    inter_list_diversity,
-    coverage,
-    RecommendationMetrics,
-    PropagationMetrics
-)
-
-mrr = mean_reciprocal_rank(recommendations, ground_truth)
-ild = inter_list_diversity(recommendations)
-cov = coverage(recommendations, catalog_size)
-```
-
----
-
-## Estadísticas del Dataset
-
-**Grafos:**
-- Bipartito: 4,856 users × 2,308 items = 117,988 edges (0.53% densidad)
-- Social: 4,856 users, 295,660 edges (1.25% densidad)
-
-**Interacciones:**
-- Train: 58,994 interacciones
-- Test: 4,856 interacciones (leave-one-out)
-- Promedio: 12.1 interacciones/usuario
-
-**Labels:**
-- true: 536 (24.6%)
-- false: 511 (23.5%)
-- unverified: 555 (25.5%)
-- non-rumor: 576 (26.4%)
-
-Ver `graphs/graph_stats.txt` para estadísticas detalladas.
-
----
-
-## Estado del Proyecto
-
-### ✓ Semana 1 (Completada)
-- Construcción de grafo bipartito usuario-ítem
-- Construcción de grafo social implícito
-
-### ✓ Semana 2 (Infraestructura completada)
-- Encoding de nodos con BERT
-- Linear Threshold Model implementado
-- Métricas MRR, ILD, propagación implementadas
-- **Pendiente:** Entrenamiento de GCN baseline (notebook)
-
-### Semana 3 (Por hacer)
-- Implementar y entrenar LightGCN
-- Implementar Sheaf4Rec (opcional)
-
-### Semana 4 (Por hacer)
-- Evaluar todos los modelos (baselines + GNNs)
-- Análisis comparativo de propagación
-- Redacción de informe Midterm
+- ✓ Semana 1: Construcción de grafos
+- ✓ Semana 2: BERT embeddings + LTM + métricas
+  → Pendiente: Entrenar GCN con BERT embeddings y GCN sin BERT embeddings (random)
+- Semana 3: Entrenar LightGCN con y sin BERT embeddings + Sheaf4Rec (opcional, con y sin BERT)
+- Semana 4: Análisis comparativo de todos los modelos + informe

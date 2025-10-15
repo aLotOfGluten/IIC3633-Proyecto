@@ -1,14 +1,11 @@
 #!/bin/bash
-# Script de setup automatizado para el proyecto Midterm
-# Uso: bash setup.sh
 
-set -e  # Exit on error
+set -e
 
 echo "=================================================="
 echo "Setup: GNN-based Recommender Systems - Midterm"
 echo "=================================================="
 
-# Check Python version
 echo ""
 echo "[1/5] Verificando Python..."
 if ! command -v python3 &> /dev/null; then
@@ -18,7 +15,6 @@ fi
 PYTHON_VERSION=$(python3 --version)
 echo "✓ $PYTHON_VERSION encontrado"
 
-# Create virtual environment
 echo ""
 echo "[2/5] Creando virtual environment..."
 if [ -d "venv" ]; then
@@ -28,25 +24,21 @@ else
     echo "✓ Virtual environment creado"
 fi
 
-# Activate venv
 echo ""
 echo "[3/5] Activando venv..."
 source venv/bin/activate
 echo "✓ venv activado"
 
-# Upgrade pip
 echo ""
 echo "[4/5] Actualizando pip..."
 pip install --upgrade pip > /dev/null 2>&1
 echo "✓ pip actualizado"
 
-# Install dependencies
 echo ""
 echo "[5/5] Instalando dependencias..."
 echo "Esto puede tomar varios minutos..."
 pip install -r requirements.txt
 
-# Verify installation
 echo ""
 echo "=================================================="
 echo "Verificando instalación..."
@@ -80,7 +72,6 @@ except ImportError as e:
     sys.exit(1)
 EOF
 
-# Final instructions
 echo ""
 echo "=================================================="
 echo "✅ Setup completado exitosamente!"

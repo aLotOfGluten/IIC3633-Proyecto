@@ -12,7 +12,6 @@ class LinearThresholdModel:
         self._build_adjacency()
 
     def _build_adjacency(self):
-        # For LTM, we need both outgoing neighbors (for spreading) and incoming neighbors (for influence)
         self.out_neighbors = [[] for _ in range(self.num_nodes)]
         self.in_neighbors = [[] for _ in range(self.num_nodes)]
         self.edge_weights = {}
@@ -29,7 +28,6 @@ class LinearThresholdModel:
             self.edge_weights[(src, dst)] = weight
 
     def _normalize_influence(self, node: int) -> Dict[int, float]:
-        # Calculate normalized incoming influence to this node
         if not self.in_neighbors[node]:
             return {}
 
