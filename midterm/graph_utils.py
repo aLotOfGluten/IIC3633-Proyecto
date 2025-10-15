@@ -21,6 +21,9 @@ class DataLoader:
     def load_labels(self) -> pd.DataFrame:
         return pd.read_csv(self.base_path / "item_labels.csv")
 
+    def load_item_text(self) -> pd.DataFrame:
+        return pd.read_csv(self.base_path / "item_text_clean.csv")
+
 
 class GraphStatistics:
     @staticmethod
@@ -73,3 +76,11 @@ def build_user_item_matrix(interactions: pd.DataFrame,
     col = interactions['item_idx'].values
     data = np.ones(len(interactions))
     return csr_matrix((data, (row, col)), shape=(num_users, num_items))
+
+
+def load_embeddings(embedding_path: Path) -> torch.Tensor:
+    return torch.load(embedding_path)
+
+
+def save_embeddings(embeddings: torch.Tensor, output_path: Path):
+    torch.save(embeddings, output_path)
