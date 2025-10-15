@@ -6,7 +6,7 @@ from metrics import PropagationMetrics
 
 
 def load_social_graph(graph_path: str = "graphs/social_graph.pt"):
-    return torch.load(graph_path)
+    return torch.load(graph_path, weights_only=False)
 
 
 def print_simulation_results(ltm: LinearThresholdModel,
@@ -36,7 +36,9 @@ def demo_basic_simulation():
     print("DEMO: Basic Linear Threshold Model Simulation")
     print("=" * 60)
 
+    print("\nLoading social graph...")
     graph = load_social_graph()
+    print("Initializing Linear Threshold Model...")
     ltm = LinearThresholdModel(graph, seed=42)
 
     print(f"\nSocial graph loaded:")
@@ -44,7 +46,9 @@ def demo_basic_simulation():
     print(f"  Edges: {graph.edge_index.size(1)}")
 
     seed_nodes = {0, 1, 2, 3, 4}
+    print(f"\nRunning simulation with {len(seed_nodes)} seed nodes...")
     infection_rounds = ltm.simulate(seed_nodes, max_iterations=50)
+    print("Simulation complete!")
 
     print_simulation_results(
         ltm,
@@ -59,17 +63,22 @@ def demo_custom_thresholds():
     print("DEMO: Custom Threshold Configuration")
     print("=" * 60)
 
+    print("\nLoading social graph...")
     graph = load_social_graph()
+    print("Initializing Linear Threshold Model...")
     ltm = LinearThresholdModel(graph, seed=42)
 
     seed_nodes = {0, 1, 2}
+    print(f"\nUsing {len(seed_nodes)} seed nodes for both simulations")
 
+    print("\n[1/2] Running simulation with LOW thresholds (0.1)...")
     low_thresholds = np.ones(ltm.num_nodes) * 0.1
     infection_rounds_low = ltm.simulate(
         seed_nodes,
         thresholds=low_thresholds,
         max_iterations=50
     )
+    print("Low threshold simulation complete!")
 
     print_simulation_results(
         ltm,
@@ -78,12 +87,14 @@ def demo_custom_thresholds():
         "Simulation with LOW thresholds (0.1)"
     )
 
+    print("\n[2/2] Running simulation with HIGH thresholds (0.8)...")
     high_thresholds = np.ones(ltm.num_nodes) * 0.8
     infection_rounds_high = ltm.simulate(
         seed_nodes,
         thresholds=high_thresholds,
         max_iterations=50
     )
+    print("High threshold simulation complete!")
 
     print_simulation_results(
         ltm,
@@ -98,21 +109,27 @@ def demo_expected_propagation():
     print("DEMO: Expected Propagation (Monte Carlo)")
     print("=" * 60)
 
+    print("\nLoading social graph...")
     graph = load_social_graph()
+    print("Initializing Linear Threshold Model...")
     ltm = LinearThresholdModel(graph, seed=42)
 
-    seed_sizes = [1, 5, 10, 20, 50]
+    seed_sizes = [1, 5, 10, 20]
 
+    print(f"\nTesting {len(seed_sizes)} different seed sizes (10 simulations each)...")
     print("\nExpected propagation for different seed set sizes:")
     print(f"{'Seed Size':<15} {'Expected Infected':<20} {'Expected Reach'}")
     print("-" * 60)
 
-    for size in seed_sizes:
+    for idx, size in enumerate(seed_sizes, 1):
+        print(f"[{idx}/{len(seed_sizes)}] Computing for seed size {size}...", end=" ", flush=True)
         seed_nodes = set(range(size))
-        expected = ltm.expected_propagation(seed_nodes, num_simulations=50)
+        expected = ltm.expected_propagation(seed_nodes, num_simulations=10)
         reach = expected / ltm.num_nodes * 100
 
-        print(f"{size:<15} {expected:<20.2f} {reach:.2f}%")
+        print(f"\r{size:<15} {expected:<20.2f} {reach:.2f}%")
+
+    print("\nExpected propagation analysis complete!")
 
 
 def demo_monte_carlo_analysis():
@@ -120,15 +137,19 @@ def demo_monte_carlo_analysis():
     print("DEMO: Monte Carlo Propagation Analysis")
     print("=" * 60)
 
+    print("\nLoading social graph...")
     graph = load_social_graph()
+    print("Initializing Linear Threshold Model...")
     ltm = LinearThresholdModel(graph, seed=42)
 
     seed_nodes = set(range(10))
 
     print(f"\nRunning Monte Carlo analysis with {len(seed_nodes)} seed nodes...")
-    print("(100 simulations)")
+    print("(20 simulations)")
+    print("Progress: ", end="", flush=True)
 
-    results = ltm.monte_carlo_propagation(seed_nodes, num_simulations=100)
+    results = ltm.monte_carlo_propagation(seed_nodes, num_simulations=20)
+    print("✓ Complete!")
 
     print("\nResults:")
     print(f"  Mean reach: {results['mean_reach'] * 100:.2f}% "
@@ -144,14 +165,20 @@ def demo_propagation_metrics():
     print("DEMO: Propagation Metrics")
     print("=" * 60)
 
+    print("\nLoading social graph...")
     graph = load_social_graph()
+    print("Initializing Linear Threshold Model...")
     ltm = LinearThresholdModel(graph, seed=42)
 
     seed_nodes = set(range(15))
+    print(f"\nRunning simulation with {len(seed_nodes)} seed nodes...")
     infection_rounds = ltm.simulate(seed_nodes, max_iterations=50)
+    print("Simulation complete!")
 
+    print("\nComputing propagation metrics...")
     metrics_calculator = PropagationMetrics(infection_rounds, ltm.num_nodes)
     metrics = metrics_calculator.compute_all()
+    print("Metrics computed!")
 
     print(f"\nSeed nodes: {len(seed_nodes)}")
     print("\nPropagation metrics:")

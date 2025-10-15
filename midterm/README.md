@@ -2,6 +2,99 @@
 
 Pipeline completo para sistemas de recomendación basados en Graph Neural Networks sobre datasets Twitter15/16. Incluye construcción de grafos, generación de node embeddings, Linear Threshold Model para simulación de propagación, y métricas de evaluación.
 
+## Setup Inicial
+
+### ¿Por qué usar un Virtual Environment?
+
+Un virtual environment (venv) es **esencial** para este proyecto por varias razones:
+
+1. **Aislamiento de dependencias**: PyTorch y PyTorch Geometric tienen versiones específicas que pueden conflictuar con otros proyectos
+2. **Reproducibilidad**: Garantiza que todos trabajen con las mismas versiones de librerías
+3. **Limpieza**: No contamina el Python global del sistema
+4. **Compatibilidad**: PyTorch Geometric puede requerir versiones específicas de torch
+
+### Instalación Paso a Paso
+
+#### Opción A: Setup Automatizado (Recomendado - Linux/Mac)
+
+```bash
+# 1. Navegar al directorio midterm
+cd midterm
+
+# 2. Ejecutar script de setup
+bash setup.sh
+```
+
+El script automáticamente:
+- ✓ Verifica Python
+- ✓ Crea virtual environment
+- ✓ Instala todas las dependencias
+- ✓ Valida la instalación
+
+#### Opción B: Setup Manual
+
+```bash
+# 1. Navegar al directorio midterm
+cd midterm
+
+# 2. Crear virtual environment
+python3 -m venv venv
+
+# 3. Activar el virtual environment
+# En Linux/Mac:
+source venv/bin/activate
+# En Windows:
+# venv\Scripts\activate
+
+# 4. Instalar dependencias
+pip install --upgrade pip
+pip install -r requirements.txt
+
+# 5. Verificar instalación
+python -c "import torch; import torch_geometric; print('✓ PyTorch y PyG instalados correctamente')"
+```
+
+### Notas Importantes
+
+- **BERT Embeddings**: La primera ejecución de `--bert` descargará modelos (~400MB)
+- **Activación del venv**: Recuerda activar el venv cada vez que trabajes:
+  ```bash
+  source venv/bin/activate  # Linux/Mac
+  ```
+- **PyTorch Geometric**: Si tienes problemas de instalación, ver sección [Troubleshooting](#troubleshooting)
+
+### Verificación del Setup
+
+Una vez instalado, verifica que todo funcione:
+
+```bash
+# Activar venv
+source venv/bin/activate
+
+# Ejecutar test completo del pipeline
+python test_pipeline.py
+```
+
+Si todo está correcto, deberías ver:
+```
+============================================================
+✓ TODOS LOS TESTS PASARON CORRECTAMENTE
+============================================================
+```
+
+### Troubleshooting
+
+**Error: `ModuleNotFoundError: No module named 'torch_geometric'`**
+- PyTorch Geometric requiere instalación especial si `pip install` falla:
+  ```bash
+  pip install torch-geometric torch-scatter torch-sparse \
+    -f https://data.pyg.org/whl/torch-$(python -c "import torch; print(torch.__version__)")+cpu.html
+  ```
+
+**No encuentra archivos en `../data_processing/processed_h1/`**
+- Asegúrate de ejecutar los scripts desde el directorio `midterm/`
+- Verifica que exista el directorio `../data_processing/processed_h1/` con los datos procesados
+
 ## Estructura del Proyecto
 
 ```
@@ -23,30 +116,37 @@ midterm/
     └── user_embeddings_init.pt
 ```
 
-## Setup Rápido
+## Inicio Rápido (Quick Start)
 
-### 1. Instalar dependencias
+Después de completar el [Setup Inicial](#setup-inicial):
 
-```bash
-pip install torch torch-geometric scipy pandas numpy sentence-transformers
-```
-
-### 2. Construir grafos
+### 1. Construir grafos
 
 ```bash
 cd midterm
 python build_graphs.py
 ```
 
-### 3. Generar embeddings
+### 2. Generar embeddings
 
 ```bash
+# Opción rápida (random embeddings para testing)
+python prepare_features.py --random --users
+
+# Opción completa (BERT embeddings - más lento pero mejor calidad)
 python prepare_features.py --bert --users
+
+# Generar todos los embeddings de una vez
+python prepare_features.py --all
 ```
 
-### 4. Verificar pipeline
+### 3. Probar demos interactivas
 
 ```bash
+# Demo completo del Linear Threshold Model
+python demo_ltm.py
+
+# Verificar que todo el pipeline funcione
 python test_pipeline.py
 ```
 

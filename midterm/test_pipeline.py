@@ -1,5 +1,4 @@
 import torch
-import pandas as pd
 from pathlib import Path
 from graph_utils import DataLoader, load_embeddings
 from linear_threshold_model import LinearThresholdModel
@@ -12,8 +11,8 @@ def test_graphs():
     print("TEST 1: Verificar grafos")
     print("=" * 60)
 
-    bipartite = torch.load('graphs/bipartite_graph.pt')
-    social = torch.load('graphs/social_graph.pt')
+    bipartite = torch.load('graphs/bipartite_graph.pt', weights_only=False)
+    social = torch.load('graphs/social_graph.pt', weights_only=False)
 
     print(f"✓ Grafo bipartito cargado: {bipartite.num_users} users, "
           f"{bipartite.num_items} items")

@@ -12,7 +12,9 @@ class LinearThresholdModel:
         self._build_adjacency()
 
     def _build_adjacency(self):
-        self.neighbors = [[] for _ in range(self.num_nodes)]
+        # For LTM, we need both outgoing neighbors (for spreading) and incoming neighbors (for influence)
+        self.out_neighbors = [[] for _ in range(self.num_nodes)]
+        self.in_neighbors = [[] for _ in range(self.num_nodes)]
         self.edge_weights = {}
 
         edge_index = self.graph.edge_index.numpy()
@@ -22,23 +24,25 @@ class LinearThresholdModel:
             src, dst = edge_index[0, i], edge_index[1, i]
             weight = weights[i] if weights is not None else 1.0
 
-            self.neighbors[src].append(dst)
+            self.out_neighbors[src].append(dst)
+            self.in_neighbors[dst].append(src)
             self.edge_weights[(src, dst)] = weight
 
     def _normalize_influence(self, node: int) -> Dict[int, float]:
-        if not self.neighbors[node]:
+        # Calculate normalized incoming influence to this node
+        if not self.in_neighbors[node]:
             return {}
 
         influences = {}
         total_weight = sum(
             self.edge_weights.get((neighbor, node), 1.0)
-            for neighbor in self.neighbors[node]
+            for neighbor in self.in_neighbors[node]
         )
 
         if total_weight == 0:
             return {}
 
-        for neighbor in self.neighbors[node]:
+        for neighbor in self.in_neighbors[node]:
             weight = self.edge_weights.get((neighbor, node), 1.0)
             influences[neighbor] = weight / total_weight
 
@@ -63,7 +67,7 @@ class LinearThresholdModel:
 
             candidates = set()
             for node in newly_activated:
-                candidates.update(self.neighbors[node])
+                candidates.update(self.out_neighbors[node])
 
             candidates -= activated
 

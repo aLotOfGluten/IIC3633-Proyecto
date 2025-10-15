@@ -99,7 +99,7 @@ class GraphPipeline:
     def _save_graphs(self, bipartite_graph: Data, social_graph: Data):
         torch.save(bipartite_graph, self.output_path / "bipartite_graph.pt")
         torch.save(social_graph, self.output_path / "social_graph.pt")
-        print(f"Graphs saved to {self.output_path}/")
+        print(f"\nGraphs saved to {self.output_path}/")
 
     def _save_statistics(self, bipartite_graph: Data, social_graph: Data,
                         min_common_items: int):
