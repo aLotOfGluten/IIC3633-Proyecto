@@ -283,7 +283,60 @@ Ver `graphs/graph_stats.txt` para detalles.
 ## Estado
 
 - ✓ Semana 1: Construcción de grafos
-- ✓ Semana 2: BERT embeddings + LTM + métricas
-  → Pendiente: Entrenar GCN con BERT embeddings y GCN sin BERT embeddings (random)
-- Semana 3: Entrenar LightGCN con y sin BERT embeddings + Sheaf4Rec (opcional, con y sin BERT)
+- ✓ Semana 2: BERT embeddings + LTM + métricas + **GCN implementado**
+  - GCN-BERT: MRR=0.0481, Propagation Reach=64.93%
+  - GCN-Random: MRR=0.0376, Propagation Reach=39.02%
+- ✓ Semana 3: **LightGCN implementado**
+  - LightGCN: MRR=0.0508, Propagation Reach=37.99%
+  - Mejor trade-off: máxima precisión con mínima amplificación de fake news
 - Semana 4: Análisis comparativo de todos los modelos + informe
+
+## Notebooks Implementados
+
+### Semana 2: GCN Baseline
+**Archivo:** `Semana2_GCN.ipynb`
+
+Implementación de Graph Convolutional Network para recomendación de tweets con dos versiones:
+- **GCN-BERT**: Usa embeddings semánticos de BERT (384-dim) para items
+- **GCN-Random**: Usa embeddings random (64-dim) para items
+
+Incluye:
+- Entrenamiento con BPR loss
+- Evaluación con MRR, ILD, Coverage
+- Análisis de propagación de fake news con Linear Threshold Model
+- Distribución de labels en recomendaciones
+
+### Semana 3: LightGCN
+**Archivo:** `Semana3_LightGCN.ipynb`
+
+Implementación de LightGCN (arquitectura simplificada sin transformaciones ni activaciones):
+- Embeddings aprendibles para users e items (sin features pre-entrenadas)
+- 3 capas de propagación con layer combination
+- Comparación directa con GCN-BERT y GCN-Random
+
+Incluye análisis completo de recomendación y propagación.
+
+## Resultados Comparativos
+
+### Métricas de Recomendación
+
+| Modelo      | MRR    | ILD    | Coverage | Usuarios Expuestos a Fake News |
+|-------------|--------|--------|----------|-------------------------------|
+| GCN-BERT    | 0.0481 | 0.9004 | 0.1088   | 2,512 (51.73%)                |
+| GCN-Random  | 0.0376 | 0.8951 | 0.1096   | 1,776 (36.57%)                |
+| **LightGCN**| **0.0508** | 0.8493 | **0.1655** | **1,691 (34.82%)** |
+
+### Métricas de Propagación de Fake News
+
+| Modelo      | Reach  | Depth (rounds) | Speed (users/round) |
+|-------------|--------|----------------|---------------------|
+| GCN-BERT    | 64.93% | 13             | 53.42               |
+| GCN-Random  | 39.02% | 4              | 39.67               |
+| **LightGCN**| **37.99%** | 5          | **38.50**           |
+
+### Hallazgos Clave
+
+1. **LightGCN es el mejor modelo**: Máxima precisión (MRR) con mínima propagación de fake news
+2. **BERT amplifica desinformación**: GCN-BERT tiene mejor MRR que GCN-Random, pero propaga fake news 66% más
+3. **Trade-off precisión-seguridad**: LightGCN rompe este trade-off, logrando el mejor balance
+4. **Distribución de contenido**: LightGCN sesga hacia contenido "non-rumor" (64.8%) en lugar de "unverified", reduciendo fake news directas en 80% vs baseline
