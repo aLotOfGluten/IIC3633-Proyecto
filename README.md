@@ -1,9 +1,6 @@
 # IIC3633 - Proyecto: Desinformación y Viralidad en Sistemas Recomendadores
 
-Repositorio para el proyecto semestral del ramo IIC3633: Sistemas Recomendadores.
-
-**Dataset:** Twitter15/16 (rumores y noticias falsas)
-**Enfoque:** Análisis de viralidad de desinformación y evaluación de bias en recomendaciones
+Análisis de cómo diferentes algoritmos de recomendación amplifican la propagación de fake news en redes sociales usando el dataset Twitter15/16.
 
 ## Integrantes
 
@@ -11,188 +8,107 @@ Repositorio para el proyecto semestral del ramo IIC3633: Sistemas Recomendadores
 - Clemente Acevedo
 - Cristobal Fuentes
 
+---
+
 ## Estructura del Proyecto
 
 ```
 IIC3633-Proyecto/
-├── data_processing/           # Preprocesamiento de Twitter15/16
-│   ├── preprocess_unified.py  # Pipeline de procesamiento
-│   ├── analyze_h1.py           # Análisis exploratorio (EDA)
-│   ├── processed_h1/           # Datos procesados para RecSys
-│   └── plots_and_reports/      # Visualizaciones y estadísticas
-│
-├── midterm/                    # GNN-based Recommender Systems
-│   ├── build_graphs.py         # Construcción de grafos
-│   ├── prepare_features.py     # Generación de embeddings
-│   ├── linear_threshold_model.py  # Modelo de propagación
-│   ├── metrics.py              # MRR, ILD, propagation metrics
-│   ├── demo_ltm.py             # Suite de demos
-│   ├── test_pipeline.py        # Tests de verificación
-│   └── graphs/                 # Grafos y embeddings generados
-│
-└── H1_RecSys.ipynb             # Sistemas clásicos (H1)
+├── data_processing/     # Preprocesamiento de Twitter15/16
+├── midterm/             # GNN-based Recommender Systems (Semanas 1-4)
+└── H1_RecSys.ipynb      # Modelos clásicos (H1)
 ```
-
-## Inicio Rápido
-
-### 1. Preprocesamiento de Datos
-
-```bash
-cd data_processing
-python3 preprocess_unified.py
-python3 analyze_h1.py
-```
-
-**Salidas:**
-- `processed_h1/`: Interacciones train/test, mapeos, labels
-- `plots_and_reports/`: Análisis de viralidad
-
-### 2. Construcción de Grafos (Midterm)
-
-```bash
-cd midterm
-python3 build_graphs.py
-python3 prepare_features.py --bert --users
-python3 test_pipeline.py
-```
-
-**Salidas:**
-- `graphs/bipartite_graph.pt`: Grafo user-item
-- `graphs/social_graph.pt`: Grafo social implícito
-- `graphs/item_embeddings_bert.pt`: Node features
-
-### 3. Modelos de Recomendación
-
-**H1 (clásicos):** Ver `H1_RecSys.ipynb`
-**Midterm (GNNs):** Ver `midterm/README.md` para guías de implementación
 
 ---
 
-## Componentes
+## Componentes Principales
 
-### H1: Sistemas de Recomendación Clásicos
+### H1: Modelos Clásicos
 
 **Notebook:** [`H1_RecSys.ipynb`](H1_RecSys.ipynb)
 
-Implementa y compara modelos tradicionales:
-- User-KNN, Item-KNN
-- Most Popular, Random
-- TF-IDF (content-based)
+Implementa User-KNN, Item-KNN, Most Popular, Random, TF-IDF.
 
-**Métricas:** Precision@K, Recall@K, Coverage, Bias de labels
+**Métricas:** Precision@K, Recall@K, Coverage, Exposure de labels
 
-### Midterm: GNN-based Recommender Systems
+---
 
-**Carpeta:** [`midterm/`](midterm/)
+### Midterm: Graph Neural Networks
 
-Pipeline completo para sistemas de recomendación basados en GNNs:
+**Carpeta:** [`midterm/`](midterm/) | **Documentación:** [`midterm/README.md`](midterm/README.md)
 
-**Grafos:**
-- Bipartito (user-item): 4,856 users × 2,308 items
-- Social (user-user): Grafo implícito de co-interacciones
+**Notebooks:**
+- `Semana2_GCN.ipynb` - GCN-BERT y GCN-Random
+- `Semana3_LightGCN.ipynb` - LightGCN (estado del arte)
+- `Semana4_Comparative.ipynb` - Comparación completa de 6 modelos
 
-**Features:**
-- BERT embeddings (384-dim) para contenido de tweets
-- User embeddings entrenables
-
-**Modelos planeados:**
-- GCN (baseline)
-- LightGCN (estado del arte)
-- Sheaf4Rec (avanzado)
+**Modelos implementados:**
+- GCN-BERT (GNN + embeddings semánticos)
+- GCN-Random (GNN sin features)
+- LightGCN (arquitectura simplificada)
 
 **Análisis de propagación:**
-- Linear Threshold Model (LTM)
-- Simulación de difusión de desinformación
+- Linear Threshold Model para simular difusión de fake news
 - Métricas: Reach, Depth, Speed
-
-**Métricas de evaluación:**
-- MRR (Mean Reciprocal Rank)
-- ILD (Inter-List Diversity)
-- Coverage
-- Propagation metrics
-
-### Proyección Final: Análisis de Desinformación
-
-**Objetivo:** Medir cómo diferentes algoritmos de recomendación amplifican la propagación de fake news en redes sociales.
-
-**Metodología:**
-1. Identificar usuarios expuestos a desinformación (label='false' en top-10)
-2. Simular propagación con Linear Threshold Model
-3. Comparar alcance entre modelos (Random, Popular, KNN, GCN, LightGCN)
-4. Analizar trade-offs entre precisión y amplificación de desinformación
+- Comparación de amplificación entre modelos
 
 ---
 
 ## Documentación Detallada
 
-| Componente | README |
-|------------|--------|
+| Sección | README |
+|---------|--------|
 | Preprocesamiento | [`data_processing/README.md`](data_processing/README.md) |
-| GNNs y propagación | [`midterm/README.md`](midterm/README.md) |
+| Midterm (GNNs) | [`midterm/README.md`](midterm/README.md) |
 
 ---
 
-## Dataset
+## Dataset: Twitter15/16
 
-**Fuentes:**
-- Estructura de propagación: [gszswork/Twitter15_16_dataset](https://github.com/gszswork/Twitter15_16_dataset)
-- Contenido de tweets: [Kaggle - Rumor Detection ACL 2017](https://www.kaggle.com/datasets/syntheticprogrammer/rumor-detection-acl-2017/data)
+4,856 usuarios × 2,308 tweets × 63,850 interacciones
 
-**Estadísticas:**
-- Usuarios: 4,856
-- Items (tweets): 2,308
-- Interacciones: 63,850
-- Labels: true (24.6%), false (23.5%), unverified (25.5%), non-rumor (26.4%)
+**Labels:** true (24.6%), false (23.5%), unverified (25.5%), non-rumor (26.4%)
 
-**Papers de referencia:**
-
-```bibtex
-@inproceedings{ma2017detect,
-  title={Detect Rumors in Microblog Posts Using Propagation Structure via Kernel Learning},
-  author={Ma, Jing and Gao, Wei and Wong, Kam-Fai},
-  booktitle={ACL},
-  year={2017}
-}
-```
+**Fuentes:** [Twitter15/16](https://github.com/gszswork/Twitter15_16_dataset) + [Kaggle](https://www.kaggle.com/datasets/syntheticprogrammer/rumor-detection-acl-2017/data)
 
 ---
 
-## Dependencias
+## Progreso
 
-```bash
-pip install torch torch-geometric scipy pandas numpy matplotlib sentence-transformers
-```
+| Fase | Estado | Descripción |
+|------|--------|-------------|
+| **H1** | ✓ | Modelos clásicos (User-KNN, Most Popular, Random, TF-IDF) |
+| **Midterm** | ✓ | GNNs (GCN, LightGCN) + Linear Threshold Model + Comparación completa |
+| **Final** | 🔄 | Análisis profundo de amplificación de fake news |
+
+**Detalles:** Ver [`midterm/README.md`](midterm/README.md) para progreso por semana
 
 ---
 
-## Roadmap del Proyecto
+## Próximos pasos para el informe
 
-### ✓ H1 (Completado)
-- Preprocesamiento de Twitter15/16
-- Sistemas clásicos de recomendación
-- Análisis de bias y coverage
+Cabros, para cerrar el midterm falta:
 
-### ✓ Midterm - Semana 1 (Completado)
-- Construcción de grafos bipartito y social
-- Infraestructura de análisis
+1. **Redactar el informe** (documento aparte)
+   - Intro: explicar el problema de desinformación en RecSys
+   - Metodología:
+     - Construcción de grafos (bipartito + social)
+     - Modelos implementados (6 en total: Random, Most Popular, User-KNN, GCN-BERT, GCN-Random, LightGCN)
+     - Linear Threshold Model para simular propagación
+   - Resultados:
+     - Tabla comparativa (ya está en Semana4)
+     - Gráfico trade-off precisión vs amplificación
+     - Ejemplos de recomendación por usuario (para cumplir feedback de H1)
+     - Distribución de labels por modelo
+   - Análisis:
+     - ¿Por qué LightGCN es el mejor modelo?
+     - Trade-off entre MRR y propagación
+     - BERT amplifica contenido viral pero peligroso
+   - Conclusiones: implicaciones para sistemas reales
 
-### ✓ Midterm - Semana 2 (Infraestructura completada)
-- Node embeddings con BERT
-- Linear Threshold Model
-- Métricas (MRR, ILD, propagación)
-- **Pendiente:** Entrenamiento de GCN baseline
+2. **Revisar feedback de H1**
+   - ✓ Definir bien "desinformación" (label='false' = fake news verificadas)
+   - ✓ Evaluar métricas de desinformación en TODOS los modelos (ya está en Semana4)
+   - ✓ Agregar ejemplos de recomendación por usuario (ya está en Semana4)
 
-### Midterm - Semana 3 (En progreso)
-- Implementar LightGCN
-- Implementar Sheaf4Rec (opcional)
-
-### Midterm - Semana 4 (Por hacer)
-- Evaluación comparativa de todos los modelos
-- Análisis de propagación de desinformación
-- Informe Midterm
-
-### Final (Planeado)
-- Análisis profundo de amplificación de fake news
-- Comparación entre métodos clásicos vs GNNs
-- Estudio de trade-offs: precisión vs difusión
-- Informe final
+**Nota:** Sheaf4Rec lo dejamos como trabajo futuro por complejidad. Con 6 modelos ya tenemos comparación sólida.

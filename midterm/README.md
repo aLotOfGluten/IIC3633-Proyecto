@@ -1,6 +1,8 @@
 # Midterm - GNN Recommender Systems
 
-Pipeline para sistemas de recomendación basados en GNNs sobre Twitter15/16. Incluye construcción de grafos, embeddings, Linear Threshold Model, y métricas de evaluación.
+Sistema de recomendación basado en Graph Neural Networks (GNNs) aplicado al dataset Twitter15/16. Incluye construcción de grafos, node embeddings, modelos GCN/LightGCN, Linear Threshold Model, y análisis de propagación de fake news.
+
+**Objetivo:** Comparar sistemas de recomendación clásicos vs GNN-based en términos de precisión (MRR) y amplificación de desinformación (propagación en grafo social).
 
 ## Quick Setup
 
@@ -280,41 +282,93 @@ lgcn_metrics = analyze_misinformation_spread(lightgcn_recs, "LightGCN")
 
 Ver `graphs/graph_stats.txt` para detalles.
 
-## Estado
+---
 
-- ✓ Semana 1: Construcción de grafos
-- ✓ Semana 2: BERT embeddings + LTM + métricas + **GCN implementado**
-  - GCN-BERT: MRR=0.0481, Propagation Reach=64.93%
-  - GCN-Random: MRR=0.0376, Propagation Reach=39.02%
-- ✓ Semana 3: **LightGCN implementado**
-  - LightGCN: MRR=0.0508, Propagation Reach=37.99%
+## Roadmap y Estado por Semana
+
+### ✓ Semana 1 (Oct 6-12): Construcción de Grafos
+
+**Objetivo:** Construir grafos bipartito usuario-ítem y grafo social implícito a partir de las interacciones.
+
+**Completado:**
+- Grafo bipartito: 4,856 users × 2,308 items (117,988 edges)
+- Grafo social: 4,856 users (295,660 edges, threshold ≥3 co-interacciones)
+- Scripts: `build_graphs.py`, `graph_utils.py`
+- Outputs: `graphs/bipartite_graph.pt`, `graphs/social_graph.pt`
+
+---
+
+### ✓ Semana 2 (Oct 13-19): GCN Baseline + LTM
+
+**Objetivo:** Implementar GCN como baseline, Linear Threshold Model, y métricas de evaluación.
+
+**Notebook:** [`Semana2_GCN.ipynb`](Semana2_GCN.ipynb)
+
+**Completado:**
+- Node embeddings con BERT (384-dim) y Random (64-dim): `prepare_features.py`
+- GCN implementado con dos variantes:
+  - **GCN-BERT**: MRR=0.0481, Propagation Reach=64.93%
+  - **GCN-Random**: MRR=0.0376, Propagation Reach=39.02%
+- Linear Threshold Model: `linear_threshold_model.py`
+- Métricas: MRR, ILD, Coverage, Propagation (Reach, Depth, Speed): `metrics.py`
+- Análisis de exposición a fake news en top-10 recomendaciones
+
+**Hallazgos:**
+- BERT mejora precisión (+28% MRR) pero amplifica fake news (65% vs 39% reach)
+- 51.73% de usuarios expuestos a fake news en top-10 (GCN-BERT)
+
+---
+
+### ✓ Semana 3 (Oct 20-26): LightGCN
+
+**Objetivo:** Implementar LightGCN (estado del arte) y comparar con GCN.
+
+**Notebook:** [`Semana3_LightGCN.ipynb`](Semana3_LightGCN.ipynb)
+
+**Completado:**
+- LightGCN implementado (3 layers, embedding_dim=64)
+- Resultados:
+  - **LightGCN**: MRR=0.0508, Propagation Reach=37.99%
   - Mejor trade-off: máxima precisión con mínima amplificación de fake news
-- Semana 4: Análisis comparativo de todos los modelos + informe
-
-## Notebooks Implementados
-
-### Semana 2: GCN Baseline
-**Archivo:** `Semana2_GCN.ipynb`
-
-Implementación de Graph Convolutional Network para recomendación de tweets con dos versiones:
-- **GCN-BERT**: Usa embeddings semánticos de BERT (384-dim) para items
-- **GCN-Random**: Usa embeddings random (64-dim) para items
-
-Incluye:
-- Entrenamiento con BPR loss
-- Evaluación con MRR, ILD, Coverage
-- Análisis de propagación de fake news con Linear Threshold Model
-- Distribución de labels en recomendaciones
-
-### Semana 3: LightGCN
-**Archivo:** `Semana3_LightGCN.ipynb`
-
-Implementación de LightGCN (arquitectura simplificada sin transformaciones ni activaciones):
-- Embeddings aprendibles para users e items (sin features pre-entrenadas)
-- 3 capas de propagación con layer combination
 - Comparación directa con GCN-BERT y GCN-Random
 
-Incluye análisis completo de recomendación y propagación.
+**Hallazgos:**
+- LightGCN supera a ambas versiones de GCN en precisión (+5.6% vs GCN-BERT)
+- Reduce propagación de fake news en 42% vs GCN-BERT
+- Sesga hacia contenido "non-rumor" (64.8%), reduciendo fake news directas en 80%
+
+---
+
+### ✓ Semana 4 (Oct 27-30): Evaluación Comparativa
+
+**Objetivo:** Comparar todos los modelos (clásicos + GNNs) y analizar trade-offs precisión vs amplificación.
+
+**Notebook:** [`Semana4_Comparative.ipynb`](Semana4_Comparative.ipynb)
+
+**Completado:**
+- Implementación de modelos clásicos (User-KNN, Random, Most Popular)
+- Análisis de propagación para TODOS los modelos (6 en total)
+- Comparación completa: MRR, ILD, Coverage, Propagation (Reach, Depth, Speed)
+- Visualización de trade-off: Precisión vs Amplificación de fake news
+- Distribución de labels en recomendaciones por modelo
+- Ejemplos de recomendación para usuarios específicos
+- Conclusiones sobre modelos óptimos
+
+**Modelos comparados:**
+1. Random (baseline) - MRR: ~0.001, Reach: variable
+2. Most Popular (baseline) - MRR: ~0.007, Reach: variable
+3. User-KNN (clásico colaborativo) - MRR: ~0.125, Reach: calculado
+4. GCN-BERT (GNN + embeddings semánticos) - MRR: 0.0481, Reach: 64.93%
+5. GCN-Random (GNN sin features) - MRR: 0.0376, Reach: 39.02%
+6. LightGCN (GNN estado del arte) - MRR: 0.0508, Reach: 37.99%
+
+**Hallazgos clave:**
+- LightGCN logra el mejor balance: máxima precisión (MRR) con mínima propagación de fake news
+- Existe un trade-off claro entre precisión y amplificación de desinformación
+- BERT amplifica contenido viral pero también más peligroso
+- Los modelos clásicos tienen comportamientos diversos en propagación
+
+**Nota:** Sheaf4Rec se deja como trabajo futuro (complejidad de implementación).
 
 ## Resultados Comparativos
 
