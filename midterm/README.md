@@ -45,12 +45,20 @@ Sistema de recomendación basado en Graph Neural Networks (GNNs) aplicado al dat
   - Propagación con LTM en grafo social
   - Métricas: Reach, Depth, Speed
 
-### 🔄 Pendientes
+### ✅ Resultados Finales Consolidados
 
-1. **Documentación del informe final**
-   - Consolidar resultados de todos los experimentos
-   - Comparación final entre todos los modelos
-   - Visualizaciones y gráficos para presentación
+Todos los resultados han sido extraídos y documentados del notebook `GNN_Temporal_Final.ipynb`:
+
+- ✅ Comparación completa de 8 modelos (3 GNN + 5 baselines)
+- ✅ Métricas de recomendación: MRR, ILD, Coverage (por top-k)
+- ✅ Distribución de labels en recomendaciones
+- ✅ Usuarios expuestos a fake news por modelo
+- ✅ Análisis de propagación con LTM (Monte Carlo 50 simulaciones)
+- ✅ Trade-offs identificados: Precisión vs Responsabilidad
+- ✅ Recomendaciones finales para sistemas responsables
+- ✅ Cold-start performance (95.7% items nuevos en test)
+
+**Ver sección:** [🎯 Resultados Completos - GNN_Temporal_Final.ipynb](#-resultados-completos---gnn_temporal_finalipynb)
 
 ---
 
@@ -376,15 +384,201 @@ lgcn_metrics = analyze_misinformation_spread(lightgcn_recs, "LightGCN")
   - Threshold: ≥3 items compartidos
   - Avg degree: 7.78
 
-**Splits (Temporal 80/10/10)**
-- Train: 88,620 interacciones (80.0%)
-- Val: 11,534 interacciones (10.4%)
-- Test: 10,578 interacciones (9.6%)
+**Splits (Temporal 70/10/20)**
+- Train: 72,809 interacciones (69.8%)
+- Val: 10,579 interacciones (10.1%)
+- Test: 20,864 interacciones (20.0%)
 
 **Negative Sampling:**
-- Total samples: 382,391
-- Usuarios con samples: 34,618
-- Avg samples por usuario: 11.05
+- Total samples: 281,173
+- Usuarios con samples: 31,925
+
+**Grafo Bipartito (Train):**
+- Nodos totales: 40,900 (39,958 users + 942 items)
+- Edges: 145,618
+
+**Embeddings (MPNet):**
+- Model: all-mpnet-base-v2 (768-dim)
+- Train items: 942 embeddings
+- Val items (cold-start): 168 embeddings
+- Test items (cold-start): 287 embeddings
+
+---
+
+## 🎯 Resultados Completos - GNN_Temporal_Final.ipynb
+
+### Configuraciones de Modelos
+
+**GCN-BERT v2**
+- Parámetros: 5,369,664
+- Embedding dim: 128, Hidden dim: 64
+- Learning rate: 0.001, Weight decay: 1e-05
+- Dropout: 0.1, Max epochs: 150
+
+**GCN-Random v2**
+- Parámetros: 5,260,480
+- Embedding dim: 128, Hidden dim: 64
+- Learning rate: 0.001, Weight decay: 1e-05
+- Dropout: 0.1, Max epochs: 150
+
+**LightGCN v2 (Best Config)**
+- Embedding dim: 192
+- Num layers: 4
+- Learning rate: 0.0005, Weight decay: 1e-05
+- Max epochs: 200, Patience: 30
+
+### Métricas de Recomendación (Test Set - Cold-Start Items)
+
+| Modelo | MRR | ILD | Coverage | Cov@3 | Cov@5 | Cov@10 |
+|--------|-----|-----|----------|-------|-------|--------|
+| **LightGCN v2** ⭐ | **0.0347** | 0.9101 | 1.0000 | 0.9965 | 1.0000 | 1.0000 |
+| ItemKNN | 0.0347 | 0.8314 | 0.9826 | 0.8920 | 0.9582 | 0.9826 |
+| UserKNN | 0.0338 | 0.8197 | 0.9512 | 0.7840 | 0.8815 | 0.9512 |
+| TF-IDF | 0.0283 | 0.8706 | 0.9965 | 0.9965 | 0.9965 | 0.9965 |
+| GCN-BERT v2 | 0.0153 | 0.9386 | 1.0000 | 0.9617 | 0.9861 | 1.0000 |
+| GCN-Random v2 | 0.0143 | 0.9708 | 1.0000 | 0.9791 | 0.9930 | 1.0000 |
+| Random | 0.0153 | 0.9814 | 1.0000 | 1.0000 | 1.0000 | 1.0000 |
+| MostPopular | 0.0119 | 0.0000 | 0.0348 | 0.0105 | 0.0174 | 0.0348 |
+
+### Distribución de Labels en Recomendaciones (%)
+
+**Dataset Test:**
+- FR (Fake News): 57.39%
+- UR (Unverified): 21.04%
+- TR (True): 19.87%
+- NR (Non-Rumor): 1.71%
+
+| Modelo | FR (Fake) | UR (Unverified) | TR (True) | NR (Non-Rumor) |
+|--------|-----------|-----------------|-----------|----------------|
+| **GCN-BERT v2** ✅ | **50.53** (-6.86%) | 37.58 (+16.54%) | 9.01 | 2.89 |
+| ItemKNN | 56.04 | 33.11 (+12.07%) | 9.35 | 1.50 |
+| UserKNN | 55.44 | 33.76 (+12.72%) | 9.40 | 1.40 |
+| GCN-Random v2 | 59.62 (+2.23%) | 20.36 | 16.96 | 3.06 |
+| Random | 58.99 | 21.78 | 16.76 | 2.47 |
+| **LightGCN v2** ⚠️ | **67.49** (+10.10%) | 17.45 | 14.23 | 0.83 |
+| **TF-IDF** ⚠️ | **70.60** (+13.21%) | 12.20 | 15.40 | 1.81 |
+| MostPopular | 50.00 | 50.00 | 0.00 | 0.00 |
+
+**Observaciones clave:**
+- ✅ **GCN-BERT v2 REDUCE fake news**: 50.53% vs 57.39% del dataset (-6.86%)
+- ⚠️ **LightGCN v2 AMPLIFICA fake news**: 67.49% vs 57.39% del dataset (+10.10%)
+- ⚠️ **TF-IDF es el peor**: 70.60% de fake news en recomendaciones (+13.21%)
+
+### Usuarios Expuestos a Fake News (FR en Top-10)
+
+| Modelo | Usuarios Expuestos | Porcentaje |
+|--------|-------------------|------------|
+| Random | 14,150 | **100.00%** |
+| GCN-Random v2 | 14,150 | **100.00%** |
+| MostPopular | 14,150 | **100.00%** |
+| TF-IDF | 14,081 | 99.51% |
+| **LightGCN v2** | 14,010 | 99.01% |
+| ItemKNN | 13,613 | 96.20% |
+| UserKNN | 13,581 | 95.98% |
+| **GCN-BERT v2** ✅ | **13,254** | **93.67%** |
+
+**Total usuarios en test: 14,150**
+
+### Métricas de Propagación (Linear Threshold Model)
+
+**Grafo Social:**
+- Nodos: 39,958 usuarios
+- Edges: 335,458 conexiones
+
+**Semillas de Propagación (usuarios expuestos a FR):**
+
+| Modelo | Seeds | % del Grafo Social |
+|--------|-------|-------------------|
+| GCN-Random v2 | 14,150 | 35.41% |
+| MostPopular | 14,150 | 35.41% |
+| Random | 14,150 | 35.41% |
+| TF-IDF | 14,081 | 35.24% |
+| LightGCN v2 | 14,010 | 35.06% |
+| ItemKNN | 13,613 | 34.07% |
+| UserKNN | 13,581 | 33.99% |
+| **GCN-BERT v2** | **13,254** | **33.17%** ✅ |
+
+**Resultados de Propagación (Monte Carlo - 50 simulaciones):**
+
+| Modelo | Mean Reach | Usuarios Alcanzados | Mean Depth | Std Reach |
+|--------|------------|---------------------|------------|-----------|
+| GCN-Random v2 | 0.5859 | 23,411 | 20.98 | 0.0145 |
+| MostPopular | 0.5859 | 23,411 | 20.98 | 0.0145 |
+| Random | 0.5859 | 23,411 | 20.98 | 0.0145 |
+| TF-IDF | 0.5846 | 23,358 | 20.88 | 0.0144 |
+| LightGCN v2 | 0.5830 | 23,294 | 20.66 | 0.0147 |
+| ItemKNN | 0.5749 | 22,972 | 20.82 | 0.0142 |
+| **GCN-BERT v2** ✅ | 0.5742 | 22,942 | **21.60** | 0.0148 |
+| **UserKNN** ✅ | **0.5738** | **22,926** | 20.94 | 0.0143 |
+
+**Interpretación:**
+- **Mean Reach**: Fracción del grafo "infectada" con fake news
+- **UserKNN minimiza el alcance**: 57.38% (~22,926 usuarios)
+- **GCN-BERT segundo mejor**: 57.42% (~22,942 usuarios)
+- **Diferencia absoluta**: ~500 usuarios entre mejor y peor modelo
+- **GCN-BERT tiene propagación más profunda** (21.60 saltos) pero controlada
+
+---
+
+## 📊 Hallazgos Clave y Conclusiones
+
+### Trade-off: Precisión vs Responsabilidad
+
+**Mejor Precisión (MRR):**
+- 🏆 **LightGCN v2**: MRR 0.0347
+- ItemKNN muy cercano: MRR 0.0347
+- ⚠️ Pero LightGCN amplifica fake news +10.10%
+
+**Mejor Responsabilidad (Minimizar Desinformación):**
+- ✅ **GCN-BERT v2**:
+  - Reduce fake news en recomendaciones: -6.86%
+  - Solo 93.67% de usuarios expuestos (vs 99-100%)
+  - Minimiza alcance de propagación: 57.42%
+  - ⚠️ MRR más bajo: 0.0153
+
+### Comparación con Baselines Clásicos
+
+**Insights:**
+- LightGCN v2 e ItemKNN tienen prácticamente el mismo MRR (~0.0347)
+- UserKNN también competitivo (MRR 0.0338)
+- **UserKNN + GCN-BERT minimizan propagación** (~57.4% vs 58.6%)
+- Baselines Random y MostPopular tienen el peor rendimiento
+- MostPopular: 0% diversidad (ILD=0), solo recomienda lo mismo
+
+### Diversidad y Coverage
+
+**Diversidad (ILD):**
+- GCN-Random v2: 0.9708 (mayor diversidad)
+- Random baseline: 0.9814
+- LightGCN v2: 0.9101 (buena diversidad)
+
+**Coverage:**
+- Todos los GNN: 100% coverage
+- ItemKNN: 98.26%, UserKNN: 95.12%
+- MostPopular: solo 3.48% (muy sesgado)
+
+### Recomendación Final
+
+**Para un sistema responsable**, se recomienda:
+
+1. **Si prioridad = Minimizar desinformación:**
+   - ✅ **GCN-BERT v2** (reduce fake news -6.86%, menor exposición)
+
+2. **Si prioridad = Precisión de recomendación:**
+   - 🏆 **LightGCN v2** (mejor MRR 0.0347, 100% coverage)
+
+3. **Solución híbrida óptima:**
+   - Usar **LightGCN v2** con post-filtering basado en labels
+   - Implementar umbral de confianza para items FR
+   - Balance entre precisión y responsabilidad
+
+### Cold-Start Performance
+
+**Scenario:** Test set con 95.7% de items cold-start (287 de 300 items)
+
+- **LightGCN v2 maneja mejor items nuevos** (MRR 0.0347)
+- GCN-BERT depende de embeddings de texto (más robusto semánticamente)
+- ItemKNN sorprendentemente competitivo en cold-start
 
 ---
 
@@ -548,9 +742,11 @@ batch_size = 1024
 
 ---
 
-## Resultados Comparativos (Versión Actual)
+## Resultados Baseline (Versión Inicial - Semanas 2-4)
 
-### Métricas de Recomendación
+**Nota:** Estos son resultados del roadmap inicial (Semanas 2-4) con el dataset `processed_h1/` (4,856 usuarios, 2,308 items, split leave-one-out). Los resultados finales con grafos temporales están en la sección anterior.
+
+### Métricas de Recomendación (Baseline)
 
 | Modelo      | MRR    | ILD    | Coverage | Usuarios Expuestos a Fake News |
 |-------------|--------|--------|----------|-------------------------------|
@@ -558,7 +754,7 @@ batch_size = 1024
 | GCN-Random  | 0.0376 | 0.8951 | 0.1096   | 1,776 (36.57%)                |
 | **LightGCN**| **0.0508** | 0.8493 | **0.1655** | **1,691 (34.82%)** |
 
-### Métricas de Propagación de Fake News
+### Métricas de Propagación de Fake News (Baseline)
 
 | Modelo      | Reach  | Depth (rounds) | Speed (users/round) |
 |-------------|--------|----------------|---------------------|
@@ -566,7 +762,7 @@ batch_size = 1024
 | GCN-Random  | 39.02% | 4              | 39.67               |
 | **LightGCN**| **37.99%** | 5          | **38.50**           |
 
-### Hallazgos Clave
+### Hallazgos Clave (Baseline)
 
 1. **LightGCN es el mejor modelo**: Máxima precisión (MRR) con mínima propagación de fake news
 2. **BERT amplifica desinformación**: GCN-BERT tiene mejor MRR que GCN-Random, pero propaga fake news 66% más

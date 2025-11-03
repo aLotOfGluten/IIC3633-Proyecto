@@ -10,6 +10,24 @@ Análisis de cómo diferentes algoritmos de recomendación amplifican la propaga
 
 ---
 
+## 📓 Visualización de Notebooks
+
+**⚠️ Nota importante:** Si un notebook (.ipynb) no se renderiza correctamente en GitHub, puedes abrirlo directamente desde Google Colab:
+
+1. **Opción 1 (Recomendada):** Ve a [Google Colab](https://colab.research.google.com/) → "File" → "Open notebook" → pestaña "GitHub"
+2. Pega la URL de este repositorio: `https://github.com/aLotOfGluten/IIC3633-Proyecto`
+3. Selecciona el notebook que deseas abrir
+
+**Opción 2:** Agrega `https://colab.research.google.com/github/` antes de la URL del notebook en GitHub.
+
+**Ejemplo:**
+```
+Original: https://github.com/aLotOfGluten/IIC3633-Proyecto/blob/main/midterm/GNN_Temporal_Final.ipynb
+Colab:    https://colab.research.google.com/github/aLotOfGluten/IIC3633-Proyecto/blob/main/midterm/GNN_Temporal_Final.ipynb
+```
+
+---
+
 ## Estructura del Proyecto
 
 ```
