@@ -2,6 +2,31 @@
 
 Pipeline de preprocesamiento para datasets Twitter15 y Twitter16, generando estructuras optimizadas para sistemas de recomendación y GNNs.
 
+**⚠️ IMPORTANTE:** Esta carpeta contiene el preprocesamiento básico **SIN filtro temporal**. Para el procesamiento con split temporal (usado en la versión final del proyecto), ver carpeta `../data_processing_2/`.
+
+## Diferencias entre versiones de procesamiento
+
+| Aspecto | `data_processing/` (esta carpeta) | `data_processing_2/` |
+|---------|-----------------------------------|----------------------|
+| **Filtro temporal** | ❌ No aplicado | ✅ Corte en Marzo 2015 |
+| **Objetivo** | H1 + Midterm inicial | Versión final del proyecto |
+| **Split** | Leave-one-out (~92/8) | Temporal 70/15/15 (train/val/test) |
+| **Datos 2016+** | Incluidos | Descartados (mayoría unverified) |
+| **Output** | `processed_h1/` | `processed_round2/` |
+| **Usuarios** | 4,856 | ~29,400 (Twitter15 solo) |
+| **Filas procesadas** | ~63k interacciones | ~100k (Twitter15) |
+
+### ⚠️ Advertencias sobre el Dataset
+
+Los valores finales del dataset procesado **NO coinciden** con las estadísticas reportadas en los papers originales (Ma et al., 2017; Liu et al., 2015) debido a:
+
+1. **Filtros de calidad**: Eliminación de usuarios con < 8 interacciones (configurable)
+2. **Pérdida de datos**: Tweets eliminados de Twitter, errores de parsing, archivos faltantes
+3. **Filtro temporal** (en `data_processing_2/`): Descarte de datos post-2015 para balance de labels
+4. **Diferencias en fuentes**: Combinación de datasets de GitHub + Kaggle con posibles inconsistencias
+
+**Recomendación**: Documentar estas diferencias en el informe final como limitación del estudio.
+
 ## Contenido
 
 ```
@@ -206,34 +231,93 @@ El script está estructurado en funciones modulares con type hints completos:
 
 8. **`print_final_stats()`** - Imprime estadísticas finales del dataset
 
-## Estadísticas del Dataset
+## Estadísticas del Dataset (`processed_h1/`)
 
-Con configuración por defecto:
+**⚠️ Versión sin filtro temporal - para H1 y Midterm inicial**
+
+Con configuración por defecto (MIN_INTERACTIONS=8, sin filtro temporal):
 
 | Métrica | Valor |
 |---------|-------|
 | Usuarios | 4,856 |
-| Items | 2,178 |
-| Interacciones | 63,850 |
-| Densidad | 0.60% |
-| Interacciones/usuario | 13.15 |
-| Interacciones/item | 29.32 |
-| Tweets con texto | 2,178 (100%) |
+| Items | 2,308 |
+| Interacciones (train+test) | 63,850 |
+| Densidad | 0.57% |
+| Interacciones/usuario (promedio) | 13.15 |
+| Interacciones/item (promedio) | 27.67 |
+| Tweets con texto | 2,308 (100%) |
 
 ### Distribución de Clases (4-class)
 
 | Clase | Label | Items | % |
 |-------|-------|-------|---|
-| 0 | true | 536 | 24.6% |
-| 1 | false | 511 | 23.5% |
-| 2 | unverified | 555 | 25.5% |
-| 3 | non-rumor | 576 | 26.4% |
+| 0 | true | 579 | 25.1% |
+| 1 | false | 575 | 24.9% |
+| 2 | unverified | 575 | 24.9% |
+| 3 | non-rumor | 579 | 25.1% |
 
 Balance: ~25% por clase ✓
 
-### Contribución
-- Twitter15: 64.2% (1,398 items)
-- Twitter16: 35.8% (780 items)
+### Contribución por Dataset
+- Twitter15: 64.6% (1,490 items)
+- Twitter16: 35.4% (818 items)
+
+### Split Leave-One-Out
+- **Train:** 58,994 interacciones (~92.4%)
+- **Test:** 4,856 interacciones (~7.6%, 1 por usuario)
+
+---
+
+## Procesamiento con Split Temporal (`data_processing_2/`)
+
+**📍 Ubicación:** `../data_processing_2/` (branch `development`)
+
+### Pipeline Temporal Implementado
+
+Los notebooks `data_processing_t15.ipynb` y `data_processing_t16.ipynb` implementan:
+
+1. **Extracción de timestamp desde Snowflake IDs** de tweets
+2. **Filtro temporal**: `df = df.loc[df['source_datetime'] <= '2015-03-01']`
+   - Objetivo: Garantizar presencia de False Rumors (FR) en test set
+   - Datos 2016+ descartados (mayoría son tweets unverified)
+3. **Split temporal 80/10/10** (train/val/test) respetando orden cronológico
+4. **Cálculo de ventanas de actividad por usuario**:
+   - `first_activity`, `last_activity`, `sd_days`
+   - Guardado en `twitter15_user_activity.csv`
+
+### Estadísticas del Procesamiento Temporal (Twitter15)
+
+| Métrica | Valor |
+|---------|-------|
+| **Filas totales** | ~607k (pre-filtro) |
+| **Filas post-filtro temporal** | ~78.5k |
+| **Árboles/eventos** | 1,490 → 750 aprox (post-corte) |
+| **Usuarios únicos** | ~29,400 |
+| **Split train/val/test** | 80% / 10% / 10% |
+
+**Distribución de labels en test set (ejemplo):**
+- False Rumor (FR): 49 eventos
+- True Rumor (TR): 17 eventos
+- Unverified (UR): 27 eventos
+
+**⚠️ Nota:** Esta distribución varía por la naturaleza temporal del fenómeno (menos FR hacia finales de 2014).
+
+### Output Files (`processed_round2/`)
+
+```
+data_processing/processed_round2/
+├── twitter15_processed.csv           # ~78k filas con split temporal
+├── twitter15_user_activity.csv       # Ventanas temporales por usuario
+├── twitter16_processed.csv           # ~32k filas
+└── twitter16_user_activity.csv
+```
+
+### Pendientes en Procesamiento Temporal
+
+- [ ] Unificar Twitter15 + Twitter16 con el mismo filtro temporal
+- [ ] Generar archivos finales en formato compatible con `midterm/build_graphs.py`
+- [ ] Implementar negative sampling temporal (10-15 negativos/usuario)
+- [ ] Validar balance de labels en splits finales
 
 ## Guía de Uso para Sistemas de Recomendación
 

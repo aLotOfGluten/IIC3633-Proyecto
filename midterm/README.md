@@ -4,6 +4,47 @@ Sistema de recomendación basado en Graph Neural Networks (GNNs) aplicado al dat
 
 **Objetivo:** Comparar sistemas de recomendación clásicos vs GNN-based en términos de precisión (MRR) y amplificación de desinformación (propagación en grafo social).
 
+---
+
+## ⚠️ Estado Actual y Pendientes
+
+### ✅ Completado (Midterm)
+
+- Grafos bipartito y social construidos (`graphs/`)
+- Node embeddings: BERT, Random, User init
+- Modelos implementados: GCN-BERT, GCN-Random, LightGCN
+- Linear Threshold Model implementado y funcional
+- Notebooks comparativos completos (Semana2-4)
+- Análisis de propagación de fake news
+- **Datos usados:** `../data_processing/processed_h1/` (sin filtro temporal)
+
+### ⏳ Pendientes para Versión Final
+
+1. **Re-construcción de grafos con datos temporales**
+   - Usar datos de `../data_processing_2/processed_round2/`
+   - Validar colapso correcto: 1 nodo/usuario, 1 nodo/item (tree)
+   - Implementar cap en edges duplicados por par usuario-item
+
+2. **Negative Sampling**
+   - Generar 10-15 negativos por usuario
+   - Respetar ventana temporal de actividad (`user_activity.csv`)
+   - Balance 50/50 entre items populares y no populares
+   - Actualmente: `negative_samples.ipynb` en `data_processing_2/` está vacío
+
+3. **Re-entrenamiento de modelos GNN**
+   - Re-entrenar GCN-BERT, GCN-Random, LightGCN con:
+     - Datos temporales
+     - Negative sampling implementado
+     - Idealmente 3 capas (actualmente 2)
+   - Comparar métricas con modelos actuales
+
+4. **Integración final Parte 2**
+   - Ejecutar LTM con grafos actualizados
+   - Generar visualizaciones finales
+   - Consolidar resultados para informe
+
+---
+
 ## Quick Setup
 
 ```bash
@@ -264,23 +305,39 @@ gcn_metrics = analyze_misinformation_spread(gcn_recs, "GCN")
 lgcn_metrics = analyze_misinformation_spread(lightgcn_recs, "LightGCN")
 ```
 
-## Dataset Stats
+## Dataset Stats (Versión Actual)
 
-**Grafos**
-- Bipartite: 4,856 users × 2,308 items, 117,988 edges (0.53% density)
-- Social: 4,856 nodes, 295,660 edges (1.25% density)
+**⚠️ Importante:** Los grafos y modelos actuales usan datos de `../data_processing/processed_h1/` **sin filtro temporal**.
 
-**Splits**
-- Train: 58,994 interactions
-- Test: 4,856 interactions (leave-one-out)
+**Grafos generados (`graphs/`)**
+- **Bipartite:** 4,856 users × 2,308 items, 117,988 edges (density: 0.526%)
+  - Avg user degree: 12.15
+  - Avg item degree: 25.56
+- **Social:** 4,856 nodes, 295,660 edges (density: 1.25%)
+  - Construido con threshold: ≥3 items compartidos
+  - Avg degree: 60.89
 
-**Labels** (balanced)
-- true: 24.6%
-- false: 23.5%
-- unverified: 25.5%
-- non-rumor: 26.4%
+**Splits (Leave-One-Out)**
+- Train: 58,994 interacciones (~92.4%)
+- Test: 4,856 interacciones (~7.6%, 1 por usuario)
 
-Ver `graphs/graph_stats.txt` para detalles.
+**Labels (Balanceadas)**
+- true: 25.1% (579 items)
+- false: 24.9% (575 items)
+- unverified: 24.9% (575 items)
+- non-rumor: 25.1% (579 items)
+
+**Datos completos:** Ver `graphs/graph_stats.txt`
+
+### Datos Temporales Pendientes de Integración
+
+Los datos procesados con split temporal están en `../data_processing_2/processed_round2/`:
+- Twitter15: ~78.5k filas, ~29.4k usuarios únicos
+- Split temporal 80/10/10 (train/val/test)
+- Filtro: datos ≤ Marzo 2015
+- Incluye ventanas de actividad por usuario
+
+**Pendiente:** Re-construir grafos con estos datos.
 
 ---
 
@@ -370,7 +427,96 @@ Ver `graphs/graph_stats.txt` para detalles.
 
 **Nota:** Sheaf4Rec se deja como trabajo futuro (complejidad de implementación).
 
-## Resultados Comparativos
+---
+
+## 📋 Especificaciones Técnicas para Pendientes
+
+### Construcción de Grafo Definitivo
+
+**Objetivo:** Grafo correctamente colapsado con datos temporales
+
+**Criterios:**
+- **1 nodo por usuario** (no duplicados por diferentes interacciones)
+- **1 nodo por item/tree** (rumor source)
+- **Cap en edges repetidos:** Limitar interacciones duplicadas usuario-item
+  - Actualmente: Múltiples edges si usuario interactúa varias veces con mismo item
+  - Deseado: 1 edge con peso = número de interacciones, o cap máximo
+
+**Implementación sugerida en `build_graphs.py`:**
+```python
+# Agrupar y limitar interacciones duplicadas
+interactions_grouped = df.groupby(['user_id', 'item_id']).size().reset_index(name='count')
+interactions_grouped['count'] = interactions_grouped['count'].clip(upper=MAX_EDGE_CAP)  # e.g., 5
+```
+
+### Negative Sampling Temporal
+
+**Objetivo:** 10-15 samples negativos por usuario, respetando coherencia temporal
+
+**Criterios:**
+1. **Ventana temporal:** Solo items disponibles durante actividad del usuario
+   - Usar `first_activity` y `last_activity` de `user_activity.csv`
+   - No muestrear items publicados fuera de esa ventana
+
+2. **Balance de popularidad (50/50):**
+   - 50% items populares (top-N por interacciones en train)
+   - 50% items no populares (long-tail)
+
+3. **Exclusión:** No muestrear items ya interactuados por el usuario
+
+**Implementación sugerida:**
+```python
+def sample_negatives(user_id, user_activity, item_timestamps, n_samples=10):
+    user_window = user_activity[user_activity['user_id'] == user_id]
+    start, end = user_window['first_activity'], user_window['last_activity']
+
+    # Items disponibles en ventana temporal
+    available_items = item_timestamps[
+        (item_timestamps['timestamp'] >= start) &
+        (item_timestamps['timestamp'] <= end)
+    ]['item_id'].unique()
+
+    # Excluir items positivos
+    positive_items = get_user_interactions(user_id)
+    candidates = set(available_items) - set(positive_items)
+
+    # Split popular/unpopular
+    popular = get_top_n_items(candidates, n=len(candidates)//2)
+    unpopular = candidates - popular
+
+    # Sample 50/50
+    neg_samples = (
+        random.sample(popular, n_samples//2) +
+        random.sample(unpopular, n_samples//2)
+    )
+
+    return neg_samples
+```
+
+### Re-entrenamiento GNNs (3 capas)
+
+**Modelos a re-entrenar:**
+1. GCN-BERT (3 capas)
+2. GCN-Random (3 capas)
+3. LightGCN (3 capas)
+
+**Cambios respecto a versión actual:**
+- Actualmente: 2 capas GCN/LightGCN
+- Nuevo: 3 capas (mejor capacidad de agregación de vecindario)
+- Usar BPR Loss + negative samples generados
+
+**Hiperparámetros sugeridos:**
+```python
+num_layers = 3
+embedding_dim = 64
+learning_rate = 0.001
+epochs = 50-100
+batch_size = 1024
+```
+
+---
+
+## Resultados Comparativos (Versión Actual)
 
 ### Métricas de Recomendación
 

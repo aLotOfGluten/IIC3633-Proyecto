@@ -65,50 +65,69 @@ Implementa User-KNN, Item-KNN, Most Popular, Random, TF-IDF.
 
 ## Dataset: Twitter15/16
 
-4,856 usuarios × 2,308 tweets × 63,850 interacciones
+**⚠️ Nota importante:** Los valores finales del dataset procesado difieren significativamente de los reportados en los papers originales debido a filtros de calidad, eliminación de datos 2016+ (unverified), y split temporal aplicado.
 
-**Labels:** true (24.6%), false (23.5%), unverified (25.5%), non-rumor (26.4%)
+### Dataset actual (branch `main`, sin filtro temporal)
+- **Usuarios:** 4,856
+- **Items (tweets):** 2,308
+- **Interacciones:** 63,850
+- **Labels:** true (24.6%), false (23.5%), unverified (25.5%), non-rumor (26.4%)
+- **Split:** Leave-one-out (~92% train, ~8% test)
+
+### Dataset procesado con split temporal (branch `development`)
+- **Twitter15:** ~100k filas post-procesamiento
+- **Fecha de corte:** Marzo 2015 (para garantizar casos False Rumor en test)
+- **Datos 2016+ descartados** (tweets mayormente unverified)
+- **Split deseado:** 70% train / 15% val / 15% test (temporal)
+- **Ubicación:** `data_processing_2/processed_round2/`
 
 **Fuentes:** [Twitter15/16](https://github.com/gszswork/Twitter15_16_dataset) + [Kaggle](https://www.kaggle.com/datasets/syntheticprogrammer/rumor-detection-acl-2017/data)
 
 ---
 
-## Progreso
+## 🔄 Estado Actual del Proyecto
 
 | Fase | Estado | Descripción |
 |------|--------|-------------|
-| **H1** | ✓ | Modelos clásicos (User-KNN, Most Popular, Random, TF-IDF) |
-| **Midterm** | ✓ | GNNs (GCN, LightGCN) + Linear Threshold Model + Comparación completa |
-| **Final** | 🔄 | Análisis profundo de amplificación de fake news |
+| **H1** | ✅ | Modelos clásicos (User-KNN, Item-KNN, Most Popular, Random, TF-IDF) |
+| **Midterm** | ✅ | GNNs (GCN-BERT, GCN-Random, LightGCN) + Linear Threshold Model + Comparación completa |
+| **Procesamiento temporal** | 🔄 | Datos procesados en `development`, pendiente integración |
+| **Re-construcción grafo** | ⏳ | Pendiente: grafo con datos temporales + validación de colapso correcto |
+| **Negative sampling** | ⏳ | Pendiente: 10-15 negativos/usuario, ventana temporal, balance popularidad |
+| **Re-entrenamiento GNNs** | ⏳ | Pendiente: re-entrenar modelos (3 capas) con nuevos datos |
+| **Parte 2: LTM + Social Graph** | 🔄 | LTM implementado, pendiente integración final |
+| **Informe final** | ⏳ | Pendiente consolidación de resultados |
 
-**Detalles:** Ver [`midterm/README.md`](midterm/README.md) para progreso por semana
+**Detalles técnicos:** Ver [`midterm/README.md`](midterm/README.md)
 
 ---
 
-## Próximos pasos para el informe
+## 📋 Pendientes Técnicos Consolidados
 
-Cabros, para cerrar el midterm falta:
+### 1. Construcción de Grafo Definitivo
+- Validar colapso correcto: 1 nodo/usuario, 1 nodo/item (tree)
+- Implementar cap en edges duplicados entre usuario-item
+- Usar datos de `data_processing_2/processed_round2/`
 
-1. **Redactar el informe** (documento aparte)
-   - Intro: explicar el problema de desinformación en RecSys
-   - Metodología:
-     - Construcción de grafos (bipartito + social)
-     - Modelos implementados (6 en total: Random, Most Popular, User-KNN, GCN-BERT, GCN-Random, LightGCN)
-     - Linear Threshold Model para simular propagación
-   - Resultados:
-     - Tabla comparativa (ya está en Semana4)
-     - Gráfico trade-off precisión vs amplificación
-     - Ejemplos de recomendación por usuario (para cumplir feedback de H1)
-     - Distribución de labels por modelo
-   - Análisis:
-     - ¿Por qué LightGCN es el mejor modelo?
-     - Trade-off entre MRR y propagación
-     - BERT amplifica contenido viral pero peligroso
-   - Conclusiones: implicaciones para sistemas reales
+### 2. Negative Sampling Real
+- Generar 10-15 negativos por usuario
+- Respetar ventana temporal de actividad del usuario
+- Balance de popularidad 50/50 (evitar solo items no populares)
+- Actualmente: archivo `negative_samples.ipynb` vacío
 
-2. **Revisar feedback de H1**
-   - ✓ Definir bien "desinformación" (label='false' = fake news verificadas)
-   - ✓ Evaluar métricas de desinformación en TODOS los modelos (ya está en Semana4)
-   - ✓ Agregar ejemplos de recomendación por usuario (ya está en Semana4)
+### 3. Re-entrenamiento de Modelos
+- Re-entrenar GCN-BERT, GCN-Random, LightGCN con:
+  - Datos temporales (`processed_round2/`)
+  - Negative sampling implementado
+  - Idealmente 3 capas GNN
+- Comparar resultados con modelos actuales
 
-**Nota:** Sheaf4Rec lo dejamos como trabajo futuro por complejidad. Con 6 modelos ya tenemos comparación sólida.
+### 4. Parte 2: Grafo Social + LTM
+- Grafo social ya implementado (`midterm/social_graph.pt`)
+- Linear Threshold Model ya implementado
+- Pendiente: ejecutar simulaciones finales con datos actualizados
+
+### 5. Integración Final
+- Consolidar pipeline completo: data → graph → negative sampling → models → LTM
+- Documentar diferencias con papers originales
+- Generar visualizaciones finales para informe
