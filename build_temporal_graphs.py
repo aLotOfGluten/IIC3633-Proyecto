@@ -5,8 +5,8 @@ from pathlib import Path
 from collections import defaultdict
 from scipy.sparse import csr_matrix
 
-DATA_PATH = 'data_processing/processed_round2'
-OUTPUT_PATH = 'midterm/graphs_temporal'
+DATA_PATH = 'data_processing/processed_round2_random'
+OUTPUT_PATH = 'midterm/graphs_random'
 MAX_EDGE_CAP = 5
 MIN_COMMON_ITEMS = 3
 
@@ -16,9 +16,23 @@ def load_and_merge():
     df = pd.concat([df15, df16], ignore_index=True)
     return df
 
-def create_mappings(df):
-    unique_users = sorted(df['child_user_id'].unique())
-    unique_items = sorted(df['source_tree_id'].unique())
+def create_mappings(df, train_only=True):
+    """
+    Crea mappings usando SOLO train set (train_only=True)
+    o usando todo el dataset (train_only=False).
+
+    Para evitar data leakage, debemos usar train_only=True.
+    """
+    if train_only:
+        train_df = df[df['split'] == 'train']
+        unique_users = sorted(train_df['child_user_id'].unique())
+        unique_items = sorted(train_df['source_tree_id'].unique())
+        print(f"\n  IMPORTANTE: Mappings creados SOLO con train set")
+        print(f"  Esto evita data leakage pero puede causar cold-start en val/test")
+    else:
+        unique_users = sorted(df['child_user_id'].unique())
+        unique_items = sorted(df['source_tree_id'].unique())
+        print(f"\n  IMPORTANTE: Mappings creados con todo el dataset")
 
     user_to_idx = {uid: idx for idx, uid in enumerate(unique_users)}
     item_to_idx = {iid: idx for idx, iid in enumerate(unique_items)}
@@ -114,12 +128,42 @@ def main():
     print(f'Unique users: {df["child_user_id"].nunique()}')
     print(f'Unique items: {df["source_tree_id"].nunique()}')
 
-    print('Creating mappings...')
-    user_to_idx, item_to_idx = create_mappings(df)
+    print('Creating mappings (using ONLY train set)...')
+    user_to_idx, item_to_idx = create_mappings(df, train_only=True)
     num_users = len(user_to_idx)
     num_items = len(item_to_idx)
 
     print(f'Mapped: {num_users} users, {num_items} items')
+
+    # Filtrar val/test para eliminar cold-start ITEMS (pero permitir cold-start users)
+    print('\nFiltering val/test to remove cold-start ITEMS (allowing new users)...')
+    train_items = set(item_to_idx.keys())
+    all_users = df['child_user_id'].unique()
+
+    # Agregar usuarios de val/test a los mappings si no están
+    for user_id in all_users:
+        if user_id not in user_to_idx:
+            user_to_idx[user_id] = len(user_to_idx)
+
+    num_users = len(user_to_idx)  # Actualizar número de usuarios
+
+    val_df_orig = df[df['split'] == 'val']
+    test_df_orig = df[df['split'] == 'test']
+
+    # Filtrar SOLO por items (no por usuarios)
+    val_df_filtered = val_df_orig[val_df_orig['source_tree_id'].isin(train_items)]
+    test_df_filtered = test_df_orig[test_df_orig['source_tree_id'].isin(train_items)]
+
+    print(f'  Val: {len(val_df_orig)} → {len(val_df_filtered)} (removed {len(val_df_orig) - len(val_df_filtered)} cold-start items)')
+    print(f'  Test: {len(test_df_orig)} → {len(test_df_filtered)} (removed {len(test_df_orig) - len(test_df_filtered)} cold-start items)')
+    print(f'  Total users (including new users from val/test): {num_users}')
+
+    # Actualizar df con los splits filtrados
+    df = pd.concat([
+        df[df['split'] == 'train'],
+        val_df_filtered,
+        test_df_filtered
+    ])
 
     print('Applying edge cap...')
     train_df = df[df['split'] == 'train']
