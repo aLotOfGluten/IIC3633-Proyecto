@@ -5,8 +5,8 @@ from pathlib import Path
 from collections import defaultdict
 from scipy.sparse import csr_matrix
 
-DATA_PATH = 'data_processing/processed_round2_random'
-OUTPUT_PATH = 'midterm/graphs_random'
+DATA_PATH = 'data_processing/processed_round2_per_user_temporal'
+OUTPUT_PATH = 'midterm/graphs_per_user_temporal'
 MAX_EDGE_CAP = 5
 MIN_COMMON_ITEMS = 3
 
