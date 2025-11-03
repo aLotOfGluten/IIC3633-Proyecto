@@ -8,45 +8,49 @@ Sistema de recomendación basado en Graph Neural Networks (GNNs) aplicado al dat
 
 ## ⚠️ Estado Actual y Pendientes
 
-### ✅ Completado (Midterm)
+### ✅ Completado (Midterm - Semanas 1-4)
 
 - Grafos bipartito y social construidos (`graphs/`)
 - Node embeddings: BERT, Random, User init
-- Modelos implementados: GCN-BERT, GCN-Random, LightGCN
+- Modelos baseline: GCN-BERT, GCN-Random, LightGCN (2 capas)
 - Linear Threshold Model implementado y funcional
 - Notebooks comparativos completos (Semana2-4)
 - Análisis de propagación de fake news
 - **Datos usados:** `../data_processing/processed_h1/` (sin filtro temporal)
 
-### ✅ Completado (Grafos Temporales)
+### ✅ Completado (Versión Final - Grafos Temporales)
 
-- **Grafos temporales construidos** (`graphs_temporal/`)
-  - Script: `../build_temporal_graphs.py`
+- **🎯 Notebook principal:** `GNN_Temporal_Final.ipynb`
+  - Implementación completa con grafos temporales
+  - Modelos GNN con 3 capas (GCN-BERT, GCN-Random, LightGCN)
+  - Negative sampling real con ventana temporal
+  - Análisis completo de desinformación y propagación
+
+- **Grafos temporales** (`graphs_temporal/`)
+  - Script: `../scripts/build_temporal_graphs.py`
   - Bipartito: 39,958 users × 1,386 items = 176,996 edges
   - Social: 39,958 nodos, 311,020 edges
   - Cap de 5 en edges duplicados implementado
   - Splits: 80% train / 10% val / 10% test
 
-- **Negative Sampling implementado**
-  - Script: `../negative_sampling.py`
+- **Negative Sampling**
+  - Script: `../scripts/negative_sampling.py`
   - 382,391 samples (~11 por usuario)
   - Ventana temporal respetada
   - Balance 50/50 popular/unpopular
 
-### ⏳ Pendientes para Versión Final
+- **Análisis de desinformación**
+  - Distribución de labels en recomendaciones
+  - Usuarios expuestos a FR/UR por modelo
+  - Propagación con LTM en grafo social
+  - Métricas: Reach, Depth, Speed
 
-1. **Re-entrenamiento de modelos GNN**
-   - Re-entrenar GCN-BERT, GCN-Random, LightGCN con:
-     - Grafos temporales (`graphs_temporal/`)
-     - Negative sampling implementado
-     - 3 capas (actualmente 2)
-   - Comparar métricas con modelos baseline
+### 🔄 Pendientes
 
-2. **Integración final Parte 2**
-   - Ejecutar LTM con grafos temporales actualizados
-   - Analizar propagación con nuevos datos
-   - Generar visualizaciones finales
-   - Consolidar resultados para informe
+1. **Documentación del informe final**
+   - Consolidar resultados de todos los experimentos
+   - Comparación final entre todos los modelos
+   - Visualizaciones y gráficos para presentación
 
 ---
 
@@ -54,40 +58,59 @@ Sistema de recomendación basado en Graph Neural Networks (GNNs) aplicado al dat
 
 ```bash
 cd midterm
-python3 -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
+python3 -m venv ../venv
+source ../venv/bin/activate  # Windows: ..\venv\Scripts\activate
 pip install -r requirements.txt
-python test_pipeline.py
 ```
 
-## Estructura
+## 🎯 Notebook Principal
+
+**[`GNN_Temporal_Final.ipynb`](GNN_Temporal_Final.ipynb)**
+
+Este es el notebook principal del proyecto que implementa:
+- Carga de datos con split temporal (80/10/10)
+- Construcción de grafos bipartito y social
+- Negative sampling con ventana temporal
+- Modelos GNN con 3 capas (GCN-BERT, GCN-Random, LightGCN)
+- Entrenamiento con hard negatives y early stopping
+- Análisis de desinformación y exposición
+- Propagación con Linear Threshold Model
+- Comparación completa entre modelos
+
+## Notebooks del Roadmap (Semanas 1-4)
+
+- **`Semana2_GCN.ipynb`** - GCN baseline con BERT y Random embeddings
+- **`Semana3_LightGCN.ipynb`** - LightGCN state-of-the-art
+- **`Semana4_Comparative.ipynb`** - Comparación de 6 modelos
+- **`Temporal_GNN_Training.ipynb`** - Re-entrenamiento con datos temporales
+
+## Scripts Utilitarios
 
 ```
 midterm/
-├── build_graphs.py              # Grafos bipartito y social
-├── prepare_features.py          # Node embeddings (BERT/random)
-├── linear_threshold_model.py    # Simulación de propagación
+├── build_graphs.py              # Construir grafos bipartito y social
+├── prepare_features.py          # Generar node embeddings (BERT/random)
+├── linear_threshold_model.py    # Linear Threshold Model para propagación
 ├── metrics.py                   # MRR, ILD, propagation metrics
 ├── graph_utils.py               # DataLoader y utilidades
-├── node_features.py             # Encoders
-├── demo_ltm.py                  # Demos interactivas
-└── test_pipeline.py             # Tests de verificación
+├── node_features.py             # Encoders de features
+├── training_utils.py            # Utilidades de entrenamiento
+└── requirements.txt             # Dependencias Python
 ```
 
-## Pipeline
+## Pipeline (para grafos baseline)
 
 ```bash
-# 1. Construir grafos
+# 1. Construir grafos bipartito y social
 python build_graphs.py
 
-# 2. Generar embeddings
+# 2. Generar embeddings de items
 python prepare_features.py --all  # BERT + random + users
 # o
 python prepare_features.py --random --users  # Solo random (más rápido)
-
-# 3. Demo LTM
-python demo_ltm.py
 ```
+
+**Nota:** Para el workflow completo con grafos temporales, usar directamente el notebook principal `GNN_Temporal_Final.ipynb` que ejecuta todo el pipeline de forma integrada.
 
 ## Componentes
 
@@ -457,7 +480,7 @@ lgcn_metrics = analyze_misinformation_spread(lightgcn_recs, "LightGCN")
 
 ### ✅ Construcción de Grafos Temporales
 
-**Script:** `../build_temporal_graphs.py`
+**Script:** [`../scripts/build_temporal_graphs.py`](../scripts/build_temporal_graphs.py)
 
 **Implementación:**
 - 1 nodo por usuario (sin duplicados)
@@ -479,7 +502,7 @@ grouped['count'] = grouped['count'].clip(upper=MAX_EDGE_CAP)
 
 ### ✅ Negative Sampling Temporal
 
-**Script:** `../negative_sampling.py`
+**Script:** [`../scripts/negative_sampling.py`](../scripts/negative_sampling.py)
 
 **Implementación:**
 - ~11 samples por usuario (382K total)
