@@ -18,28 +18,33 @@ Sistema de recomendación basado en Graph Neural Networks (GNNs) aplicado al dat
 - Análisis de propagación de fake news
 - **Datos usados:** `../data_processing/processed_h1/` (sin filtro temporal)
 
+### ✅ Completado (Grafos Temporales)
+
+- **Grafos temporales construidos** (`graphs_temporal/`)
+  - Script: `../build_temporal_graphs.py`
+  - Bipartito: 39,958 users × 1,386 items = 176,996 edges
+  - Social: 39,958 nodos, 311,020 edges
+  - Cap de 5 en edges duplicados implementado
+  - Splits: 80% train / 10% val / 10% test
+
+- **Negative Sampling implementado**
+  - Script: `../negative_sampling.py`
+  - 382,391 samples (~11 por usuario)
+  - Ventana temporal respetada
+  - Balance 50/50 popular/unpopular
+
 ### ⏳ Pendientes para Versión Final
 
-1. **Re-construcción de grafos con datos temporales**
-   - Usar datos de `../data_processing_2/processed_round2/`
-   - Validar colapso correcto: 1 nodo/usuario, 1 nodo/item (tree)
-   - Implementar cap en edges duplicados por par usuario-item
-
-2. **Negative Sampling**
-   - Generar 10-15 negativos por usuario
-   - Respetar ventana temporal de actividad (`user_activity.csv`)
-   - Balance 50/50 entre items populares y no populares
-   - Actualmente: `negative_samples.ipynb` en `data_processing_2/` está vacío
-
-3. **Re-entrenamiento de modelos GNN**
+1. **Re-entrenamiento de modelos GNN**
    - Re-entrenar GCN-BERT, GCN-Random, LightGCN con:
-     - Datos temporales
+     - Grafos temporales (`graphs_temporal/`)
      - Negative sampling implementado
-     - Idealmente 3 capas (actualmente 2)
-   - Comparar métricas con modelos actuales
+     - 3 capas (actualmente 2)
+   - Comparar métricas con modelos baseline
 
-4. **Integración final Parte 2**
-   - Ejecutar LTM con grafos actualizados
+2. **Integración final Parte 2**
+   - Ejecutar LTM con grafos temporales actualizados
+   - Analizar propagación con nuevos datos
    - Generar visualizaciones finales
    - Consolidar resultados para informe
 
@@ -305,11 +310,11 @@ gcn_metrics = analyze_misinformation_spread(gcn_recs, "GCN")
 lgcn_metrics = analyze_misinformation_spread(lightgcn_recs, "LightGCN")
 ```
 
-## Dataset Stats (Versión Actual)
+## Dataset Stats
 
-**⚠️ Importante:** Los grafos y modelos actuales usan datos de `../data_processing/processed_h1/` **sin filtro temporal**.
+### Versión Baseline (`graphs/`) - Sin Filtro Temporal
 
-**Grafos generados (`graphs/`)**
+**Grafos generados:**
 - **Bipartite:** 4,856 users × 2,308 items, 117,988 edges (density: 0.526%)
   - Avg user degree: 12.15
   - Avg item degree: 25.56
@@ -329,15 +334,34 @@ lgcn_metrics = analyze_misinformation_spread(lightgcn_recs, "LightGCN")
 
 **Datos completos:** Ver `graphs/graph_stats.txt`
 
-### Datos Temporales Pendientes de Integración
+---
 
-Los datos procesados con split temporal están en `../data_processing_2/processed_round2/`:
-- Twitter15: ~78.5k filas, ~29.4k usuarios únicos
-- Split temporal 80/10/10 (train/val/test)
-- Filtro: datos ≤ Marzo 2015
-- Incluye ventanas de actividad por usuario
+### Versión Temporal (`graphs_temporal/`) - Twitter15 + Twitter16 Unificado
 
-**Pendiente:** Re-construir grafos con estos datos.
+**Dataset procesado:**
+- Total interacciones: 110,732
+- Usuarios únicos: 39,958
+- Items únicos: 1,386
+- Filtro temporal: datos ≤ Marzo 2015
+
+**Grafos generados:**
+- **Bipartite:** 39,958 users × 1,386 items = 176,996 edges
+  - Cap de 5 en edges duplicados implementado
+  - Avg user degree: 4.43
+  - Avg item degree: 127.7
+- **Social:** 39,958 nodes, 311,020 edges
+  - Threshold: ≥3 items compartidos
+  - Avg degree: 7.78
+
+**Splits (Temporal 80/10/10)**
+- Train: 88,620 interacciones (80.0%)
+- Val: 11,534 interacciones (10.4%)
+- Test: 10,578 interacciones (9.6%)
+
+**Negative Sampling:**
+- Total samples: 382,391
+- Usuarios con samples: 34,618
+- Avg samples por usuario: 11.05
 
 ---
 
@@ -429,69 +453,54 @@ Los datos procesados con split temporal están en `../data_processing_2/processe
 
 ---
 
-## 📋 Especificaciones Técnicas para Pendientes
+## 📋 Especificaciones Técnicas Implementadas
 
-### Construcción de Grafo Definitivo
+### ✅ Construcción de Grafos Temporales
 
-**Objetivo:** Grafo correctamente colapsado con datos temporales
+**Script:** `../build_temporal_graphs.py`
 
-**Criterios:**
-- **1 nodo por usuario** (no duplicados por diferentes interacciones)
-- **1 nodo por item/tree** (rumor source)
-- **Cap en edges repetidos:** Limitar interacciones duplicadas usuario-item
-  - Actualmente: Múltiples edges si usuario interactúa varias veces con mismo item
-  - Deseado: 1 edge con peso = número de interacciones, o cap máximo
+**Implementación:**
+- 1 nodo por usuario (sin duplicados)
+- 1 nodo por item/tree (rumor source)
+- Cap de 5 en edges duplicados usuario-item
+- Unificación de Twitter15 + Twitter16 con split temporal
 
-**Implementación sugerida en `build_graphs.py`:**
+**Código clave:**
 ```python
-# Agrupar y limitar interacciones duplicadas
-interactions_grouped = df.groupby(['user_id', 'item_id']).size().reset_index(name='count')
-interactions_grouped['count'] = interactions_grouped['count'].clip(upper=MAX_EDGE_CAP)  # e.g., 5
+grouped = df.groupby(['user_idx', 'item_idx']).size().reset_index(name='count')
+grouped['count'] = grouped['count'].clip(upper=MAX_EDGE_CAP)
 ```
 
-### Negative Sampling Temporal
+**Output:**
+- `graphs_temporal/bipartite_graph.pt`
+- `graphs_temporal/social_graph.pt`
+- Splits: train/val/test (80/10/10)
+- Mapeos: user_map.csv, item_map.csv
 
-**Objetivo:** 10-15 samples negativos por usuario, respetando coherencia temporal
+### ✅ Negative Sampling Temporal
 
-**Criterios:**
-1. **Ventana temporal:** Solo items disponibles durante actividad del usuario
-   - Usar `first_activity` y `last_activity` de `user_activity.csv`
-   - No muestrear items publicados fuera de esa ventana
+**Script:** `../negative_sampling.py`
 
-2. **Balance de popularidad (50/50):**
-   - 50% items populares (top-N por interacciones en train)
-   - 50% items no populares (long-tail)
+**Implementación:**
+- ~11 samples por usuario (382K total)
+- Ventana temporal respetada usando `user_activity.csv`
+- Balance 50/50 entre items populares y no populares
+- Exclusión de items ya interactuados
 
-3. **Exclusión:** No muestrear items ya interactuados por el usuario
-
-**Implementación sugerida:**
+**Código clave:**
 ```python
-def sample_negatives(user_id, user_activity, item_timestamps, n_samples=10):
-    user_window = user_activity[user_activity['user_id'] == user_id]
-    start, end = user_window['first_activity'], user_window['last_activity']
+available_items = [
+    item_id for item_id, ts in item_timestamps.items()
+    if start <= ts <= end and item_id not in user_items[user_id]
+]
 
-    # Items disponibles en ventana temporal
-    available_items = item_timestamps[
-        (item_timestamps['timestamp'] >= start) &
-        (item_timestamps['timestamp'] <= end)
-    ]['item_id'].unique()
-
-    # Excluir items positivos
-    positive_items = get_user_interactions(user_id)
-    candidates = set(available_items) - set(positive_items)
-
-    # Split popular/unpopular
-    popular = get_top_n_items(candidates, n=len(candidates)//2)
-    unpopular = candidates - popular
-
-    # Sample 50/50
-    neg_samples = (
-        random.sample(popular, n_samples//2) +
-        random.sample(unpopular, n_samples//2)
-    )
-
-    return neg_samples
+sorted_items = sorted(available_items, key=lambda x: item_popularity.get(x, 0), reverse=True)
+popular_pool = sorted_items[:len(sorted_items)//2]
+unpopular_pool = sorted_items[len(sorted_items)//2:]
 ```
+
+**Output:**
+- `data_processing/processed_round2/negative_samples.csv`
 
 ### Re-entrenamiento GNNs (3 capas)
 

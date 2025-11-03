@@ -312,12 +312,19 @@ data_processing/processed_round2/
 └── twitter16_user_activity.csv
 ```
 
-### Pendientes en Procesamiento Temporal
+### ✅ Completado en Procesamiento Temporal
 
-- [ ] Unificar Twitter15 + Twitter16 con el mismo filtro temporal
-- [ ] Generar archivos finales en formato compatible con `midterm/build_graphs.py`
-- [ ] Implementar negative sampling temporal (10-15 negativos/usuario)
-- [ ] Validar balance de labels en splits finales
+- [x] Unificar Twitter15 + Twitter16 con el mismo filtro temporal
+- [x] Generar archivos finales en formato compatible con construcción de grafos
+- [x] Implementar negative sampling temporal (~11 negativos/usuario)
+- [x] Construir grafos bipartito y social con datos temporales
+
+**Detalles:**
+- Script de negative sampling: `../negative_sampling.py`
+- Script de construcción de grafos: `../build_temporal_graphs.py`
+- 382,391 samples negativos generados para 34,618 usuarios
+- Grafos temporales: 39,958 users × 1,386 items
+- Output: `processed_round2/negative_samples.csv` y `midterm/graphs_temporal/`
 
 ## Guía de Uso para Sistemas de Recomendación
 
