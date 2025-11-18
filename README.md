@@ -43,6 +43,9 @@ IIC3633-Proyecto/
 │   ├── Temporal_GNN_Training.ipynb  # Re-entrenamiento con grafos temporales
 │   ├── *.py                         # Scripts utilitarios (metrics, LTM, etc.)
 │   └── graphs*/                     # Grafos generados
+├── entrega_final/               # Análisis final: Trade-off y justificaciones
+│   ├── Analisis_Final_TradeOff_COMPLETO.ipynb
+│   └── data/tradeoff_metrics.csv
 ├── scripts/                     # Scripts de procesamiento
 │   ├── build_temporal_graphs.py
 │   ├── negative_sampling.py
@@ -94,6 +97,23 @@ Implementa User-KNN, Item-KNN, Most Popular, Random, TF-IDF.
 
 ---
 
+### Entrega Final: Trade-off y Justificaciones
+
+**Carpeta:** [`entrega_final/`](entrega_final/) | **Documentación:** [`entrega_final/README.md`](entrega_final/README.md)
+
+**Notebook:** [`entrega_final/Analisis_Final_TradeOff_COMPLETO.ipynb`](entrega_final/Analisis_Final_TradeOff_COMPLETO.ipynb)
+
+**Tres contribuciones clave:**
+1. **Métrica formal Fake@K** - Cuantificación objetiva de fake news en Top-K recomendaciones
+2. **Análisis de trade-off** - Visualización del dilema entre precisión (MRR) y desinformación (Fake@10)
+3. **Justificación estadística** - Validación empírica del threshold=3 para conexiones en grafo social
+
+**Modelos analizados:** 8 total (GNNs + clásicos + baselines)
+
+**Hallazgo principal:** Existe un trade-off real entre precisión y seguridad. Los modelos con mejor MRR (LightGCN v2, TF-IDF) amplifican significativamente fake news. ItemKNN/UserKNN logran el mejor balance.
+
+---
+
 ## Documentación Detallada
 
 | Sección | README |
@@ -101,6 +121,7 @@ Implementa User-KNN, Item-KNN, Most Popular, Random, TF-IDF.
 | Preprocesamiento básico | [`data_processing/README.md`](data_processing/README.md) |
 | Procesamiento temporal | [`data_processing_temporal/README.md`](data_processing_temporal/README.md) |
 | Midterm (GNNs) | [`midterm/README.md`](midterm/README.md) |
+| Entrega Final (Trade-off) | [`entrega_final/README.md`](entrega_final/README.md) |
 | Scripts utilitarios | [`scripts/README.md`](scripts/README.md) |
 
 ---
@@ -141,7 +162,8 @@ Implementa User-KNN, Item-KNN, Most Popular, Random, TF-IDF.
 | **Re-entrenamiento GNNs (3 capas)** | ✅ | Implementado en `GNN_Temporal_Final.ipynb` |
 | **LTM + Grafo Social** | ✅ | Análisis de propagación implementado |
 | **Análisis de desinformación** | ✅ | Distribución de labels y exposición por modelo |
-| **Documentación** | 🔄 | READMEs actualizados, pendiente informe final |
+| **Análisis de trade-off** | ✅ | Fake@K, frontera de Pareto, justificación threshold |
+| **Documentación** | ✅ | READMEs completos, pendiente solo informe final |
 
 **📍 Notebook principal:** [`midterm/GNN_Temporal_Final.ipynb`](midterm/GNN_Temporal_Final.ipynb)
 
@@ -184,19 +206,21 @@ Implementa User-KNN, Item-KNN, Most Popular, Random, TF-IDF.
 
 ### 1. Informe Final
 - ✅ Resultados técnicos completos
-- 🔄 Consolidar análisis comparativo de todos los modelos
-- 🔄 Documentar hallazgos sobre amplificación de desinformación
-- 🔄 Generar visualizaciones finales para presentación
+- ✅ Análisis comparativo consolidado (8 modelos)
+- ✅ Hallazgos sobre amplificación de desinformación documentados
+- ✅ Visualizaciones finales generadas (trade-off, distribuciones, justificaciones)
+- 🔄 Redacción del documento de informe final
 
-### 2. Documentación Adicional
+### 2. Documentación
 - ✅ READMEs actualizados con nueva estructura
-- 🔄 Guía de ejecución end-to-end
-- 🔄 Documentar limitaciones y diferencias con papers originales
+- ✅ Análisis de trade-off documentado
+- ✅ Justificación de parámetros (threshold=3)
+- 🔄 Guía de ejecución end-to-end (opcional)
 
 ### 3. Validación Final
-- Verificar reproducibilidad de todos los notebooks
-- Validar que todas las dependencias estén en `requirements.txt`
-- Confirmar que grafos y datos procesados son accesibles
+- 🔄 Verificar reproducibilidad de todos los notebooks
+- 🔄 Validar que todas las dependencias estén en `requirements.txt`
+- ✅ Grafos y datos procesados accesibles desde repositorio
 
 ---
 
