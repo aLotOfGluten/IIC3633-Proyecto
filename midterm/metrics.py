@@ -109,17 +109,88 @@ class PropagationMetrics:
         return len(self.all_infected) / self.total_nodes
 
 
+def fake_at_k(recommendations: List[List[int]],
+               item_labels: Dict[int, str],
+               k: int = 10,
+               fake_label: str = 'FR') -> float:
+    """
+    Métrica Fake@K: Proporción de ítems falsos en las primeras K recomendaciones.
+
+    Args:
+        recommendations: Lista de recomendaciones por usuario [[item1, item2, ...], ...]
+        item_labels: Diccionario {item_id: label} donde label puede ser 'FR', 'TR', 'UR', 'NR'
+        k: Número de recomendaciones top a considerar (default: 10)
+        fake_label: Etiqueta que identifica noticias falsas (default: 'FR')
+
+    Returns:
+        float: Proporción de ítems falsos en Top-K (valor entre 0 y 1)
+    """
+    total_fake_items = 0
+    total_items = 0
+
+    for rec_list in recommendations:
+        top_k_items = rec_list[:k]
+        for item_id in top_k_items:
+            total_items += 1
+            if item_labels.get(item_id) == fake_label:
+                total_fake_items += 1
+
+    return total_fake_items / total_items if total_items > 0 else 0.0
+
+
+def user_exposure_to_fake_news(recommendations: List[List[int]],
+                                 item_labels: Dict[int, str],
+                                 k: int = 10,
+                                 fake_label: str = 'FR') -> Dict[str, float]:
+    """
+    Calcula métricas de exposición de usuarios a desinformación.
+
+    Args:
+        recommendations: Lista de recomendaciones por usuario
+        item_labels: Diccionario {item_id: label}
+        k: Número de recomendaciones top a considerar
+        fake_label: Etiqueta que identifica noticias falsas
+
+    Returns:
+        Dict con métricas:
+            - 'users_exposed': Proporción de usuarios expuestos a fake news en Top-K
+            - 'avg_fake_per_user': Promedio de ítems falsos por usuario en Top-K
+            - 'max_fake_per_user': Máximo de ítems falsos que recibe un usuario
+    """
+    users_exposed = 0
+    fake_counts = []
+
+    for rec_list in recommendations:
+        top_k_items = rec_list[:k]
+        fake_count = sum(1 for item_id in top_k_items
+                        if item_labels.get(item_id) == fake_label)
+
+        fake_counts.append(fake_count)
+        if fake_count > 0:
+            users_exposed += 1
+
+    total_users = len(recommendations)
+
+    return {
+        'users_exposed': users_exposed / total_users if total_users > 0 else 0.0,
+        'avg_fake_per_user': np.mean(fake_counts) if fake_counts else 0.0,
+        'max_fake_per_user': max(fake_counts) if fake_counts else 0
+    }
+
+
 class RecommendationMetrics:
     def __init__(self, recommendations: List[List[int]],
                  ground_truth: List[Set[int]],
                  catalog_size: int,
-                 embeddings: Optional[torch.Tensor] = None):
+                 embeddings: Optional[torch.Tensor] = None,
+                 item_labels: Optional[Dict[int, str]] = None):
         self.recommendations = recommendations
         self.ground_truth = ground_truth
         self.catalog_size = catalog_size
         self.embeddings = embeddings
+        self.item_labels = item_labels
 
-    def compute_all(self) -> Dict[str, float]:
+    def compute_all(self, k: int = 10) -> Dict[str, float]:
         metrics = {
             'mrr': mean_reciprocal_rank(self.recommendations, self.ground_truth),
             'ild': inter_list_diversity(self.recommendations),
@@ -131,5 +202,15 @@ class RecommendationMetrics:
                 self.embeddings,
                 self.recommendations
             )
+
+        # Agregar métricas de desinformación si están disponibles las etiquetas
+        if self.item_labels is not None:
+            metrics[f'fake@{k}'] = fake_at_k(self.recommendations, self.item_labels, k)
+            exposure_metrics = user_exposure_to_fake_news(
+                self.recommendations,
+                self.item_labels,
+                k
+            )
+            metrics.update(exposure_metrics)
 
         return metrics
