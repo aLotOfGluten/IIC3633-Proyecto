@@ -28,6 +28,16 @@ Colab:    https://colab.research.google.com/github/aLotOfGluten/IIC3633-Proyecto
 
 ---
 
+## 🚀 Guía rápida
+
+- Entorno: `python3 -m venv venv && source venv/bin/activate && pip install -r midterm/requirements.txt`
+- Resultados finales: abre [`entrega_final/Analisis_Final_TradeOff_COMPLETO.ipynb`](entrega_final/Analisis_Final_TradeOff_COMPLETO.ipynb) o su versión en Colab (`https://colab.research.google.com/github/aLotOfGluten/IIC3633-Proyecto/blob/main/entrega_final/Analisis_Final_TradeOff_COMPLETO.ipynb`)
+- Grafos y datos versionados: `data_processing/processed_round2/` + `midterm/graphs_temporal/` (ya incluidos en el repo)
+- Re-entrenar GNNs: usar [`midterm/GNN_Temporal_Final.ipynb`](midterm/GNN_Temporal_Final.ipynb) consumiendo esos grafos
+- Pipeline desde cero (opcional): notebooks en `data_processing_temporal/` → `python scripts/build_temporal_graphs.py` → `python scripts/negative_sampling.py`
+
+---
+
 ## Estructura del Proyecto
 
 ```
@@ -163,7 +173,7 @@ Implementa User-KNN, Item-KNN, Most Popular, Random, TF-IDF.
 | **LTM + Grafo Social** | ✅ | Análisis de propagación implementado |
 | **Análisis de desinformación** | ✅ | Distribución de labels y exposición por modelo |
 | **Análisis de trade-off** | ✅ | Fake@K, frontera de Pareto, justificación threshold |
-| **Documentación** | ✅ | READMEs completos, pendiente solo informe final |
+| **Documentación** | ✅ | READMEs completos + análisis final documentado |
 
 **📍 Notebook principal:** [`midterm/GNN_Temporal_Final.ipynb`](midterm/GNN_Temporal_Final.ipynb)
 
@@ -202,25 +212,10 @@ Implementa User-KNN, Item-KNN, Most Popular, Random, TF-IDF.
 
 ---
 
-## 📋 Próximos Pasos
-
-### 1. Informe Final
-- ✅ Resultados técnicos completos
-- ✅ Análisis comparativo consolidado (8 modelos)
-- ✅ Hallazgos sobre amplificación de desinformación documentados
-- ✅ Visualizaciones finales generadas (trade-off, distribuciones, justificaciones)
-- 🔄 Redacción del documento de informe final
-
-### 2. Documentación
-- ✅ READMEs actualizados con nueva estructura
-- ✅ Análisis de trade-off documentado
-- ✅ Justificación de parámetros (threshold=3)
-- 🔄 Guía de ejecución end-to-end (opcional)
-
-### 3. Validación Final
-- 🔄 Verificar reproducibilidad de todos los notebooks
-- 🔄 Validar que todas las dependencias estén en `requirements.txt`
-- ✅ Grafos y datos procesados accesibles desde repositorio
+## 📋 Próximos Pasos (opcionales)
+- Verificar reproducibilidad en un entorno limpio (`pip install -r midterm/requirements.txt` + ejecución de notebooks clave)
+- Confirmar que cualquier dependencia nueva quede en `midterm/requirements.txt`
+- Extender la guía de ejecución end-to-end si se agregan más experimentos
 
 ---
 
@@ -556,7 +551,7 @@ class GCNRecommender(nn.Module):
 #### 3. Construcción Correcta de Grafos
 
 **Estadísticas finales:**
-- **Bipartito:** 39,958 users × 1,386 items = 177,240 edges
+- **Bipartito:** 39,958 users × 1,386 items = 176,996 edges
 - **Social:** 39,958 nodos, 311,020 edges (densidad: ~0.02%)
 - **Threshold grafo social:** ≥3 items compartidos
 
